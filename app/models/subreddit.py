@@ -2,14 +2,14 @@ import logging
 
 from django.db import models
 
-from src.models.base import BaseModel
+from app.models.base import BaseModel
 
 logger = logging.getLogger(__name__)
 
 
-class Queue(BaseModel):
+class Subreddit(BaseModel):
     class Meta:
-        db_table = "queue"
+        db_table = "subreddits"
 
     name = models.CharField(
         max_length=100,
@@ -17,5 +17,8 @@ class Queue(BaseModel):
         unique=True,
     )
 
+    subscribers = models.IntegerField()
+    type = models.TextField()
+
     def __str__(self):
-        return f"queue: {self.name}"
+        return f"{self.name}"
