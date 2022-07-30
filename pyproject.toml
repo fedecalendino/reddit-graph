@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "reddit-graph"
+version = "0.1.0"
+description = "Graph representation of reddit."
+license = "MIT"
+readme = "README.md"
+
+authors = [
+    "Fede Calendino <fede@calendino.com>"
+]
+
+packages = [
+    {include = "src"}
+]
+
+[tool.poetry.dependencies]
+django = "^4.0.6"
+python = "^3.8"
+praw = "^7.6.0"
+requests = "^2.28.1"
+
+[tool.poetry.group.dev.dependencies]
+black = "^22.6.0"
+coverage = "^6.4.2"
+ddt = "^1.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
