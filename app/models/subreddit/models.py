@@ -14,7 +14,41 @@ class Subreddit(BaseModel):
         db_table = "subreddits"
 
     # Fields
-    subscribers = models.IntegerField()
+    color = models.CharField(
+        blank=True,
+        default=None,
+        max_length=7,
+        null=True,
+    )
+
+    icon_url = models.URLField(
+        blank=True,
+        default=None,
+        null=True,
+    )
+
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    nsfw = models.BooleanField(
+        default=False,
+    )
+
+    quarantined = models.BooleanField(
+        default=False,
+    )
+
+    subscribers = models.IntegerField(
+        default=0,
+    )
+
+    title = models.TextField(
+        blank=True,
+        null=True,
+    )
+
     type = fields.EnumField(
         SubredditType,
         default=SubredditType.PUBLIC,
