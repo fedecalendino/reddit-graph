@@ -41,5 +41,6 @@ class Relation(BaseModel):
         on_delete=models.DO_NOTHING,
     )
 
+    # Methods
     def __str__(self):
         return f"{self.source} > {self.target}"

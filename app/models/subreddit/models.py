@@ -62,5 +62,11 @@ class Subreddit(BaseModel):
         max_length=SubredditType.max_length(),
     )
 
+    # Properties
+    @property
+    def url(self):
+        return f"https://reddit.com/r/{self.name}"
+
+    # Methods
     def __str__(self):
         return f"{self.name}"
