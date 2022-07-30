@@ -2,6 +2,6 @@ import django
 
 django.setup()
 
-from app.jobs import check
+from app.jobs import clear_queue, fill_queue
 
-check.run("hearthstone")
+clear_queue.run()

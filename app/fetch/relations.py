@@ -1,11 +1,12 @@
 import logging
 import re
 from typing import Dict, Iterable, Set
+from django.utils import timezone
 
 from prawcore.exceptions import Forbidden
 
 from app.constants import SUBREDDIT_REGEX, EXCLUDED
-from app.models.relation import RelationType
+from app.models.relation import Relation, RelationType
 from app.models.subreddit import Subreddit, SubredditType
 from app.reddit import reddit
 
@@ -19,11 +20,32 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
     sub = reddit.subreddit(subreddit.name)
     excluded = {sub.display_name.lower()} | EXCLUDED
 
-    return {
+    relations = {
         RelationType.SIDEBAR: set(_fetch_sidebar_relations(sub, excluded)),
         RelationType.TOPBAR: set(_fetch_topbar_relations(sub, excluded)),
         RelationType.WIKI: set(_fetch_wiki_relations(sub, excluded)),
     }
+
+    for relation_type, related_subreddits in relations.items():
+        for related_subreddit in related_subreddits:
+            try:
+                relation = Relation.objects.get(
+                    source=subreddit.name,
+                    target=related_subreddit,
+                    type=relation_type,
+                )
+            except Relation.DoesNotExist:
+                relation = Relation(
+                    source=subreddit.name,
+                    target=related_subreddit,
+                    type=relation_type,
+                )
+
+            relation.last_update = timezone.now()
+            relation.save()
+            logger.info("Saved %s", relation)
+
+    return relations
 
 
 def _fetch_sidebar_relations(sub, excluded: Set[str]) -> Iterable[str]:

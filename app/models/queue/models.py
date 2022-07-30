@@ -20,4 +20,4 @@ class Queue(BaseModel):
 
     # Methods
     def __str__(self):
-        return f"queue: {self.id}"
+        return f"{self.name}"

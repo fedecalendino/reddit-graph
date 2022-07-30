@@ -8,6 +8,7 @@ from prawcore.exceptions import NotFound, Forbidden, Redirect
 from app.constants import EXCLUDED
 from app.models.subreddit import Subreddit, SubredditType
 from app.reddit import reddit
+from . import relations
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +40,19 @@ def fetch_subreddit(name: str) -> Subreddit:
         logger.error(exc)
         type_ = SubredditType.ERROR
 
-    return _create_non_public_subreddit(name, type_)
+    subreddit = _create_non_public_subreddit(name, type_)
+    return subreddit
 
 
 def _process_public_subreddit(sub) -> Subreddit:
-    subreddit, created = Subreddit.objects.get_or_create(
-        name=sub.display_name.lower(),
-    )
+    try:
+        subreddit = Subreddit.objects.get(
+            name=sub.display_name.lower(),
+        )
+    except Subreddit.DoesNotExist:
+        subreddit = Subreddit(
+            name=sub.display_name.lower(),
+        )
 
     subreddit.id = sub.id
     subreddit.color = sub.key_color
@@ -63,13 +70,20 @@ def _process_public_subreddit(sub) -> Subreddit:
     subreddit.save()
     logger.info("Saved %s", subreddit.name)
 
+    relations(subreddit)
+
     return subreddit
 
 
 def _create_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
-    subreddit, created = Subreddit.objects.get_or_create(
-        name=name,
-    )
+    try:
+        subreddit = Subreddit.objects.get(
+            name=name,
+        )
+    except Subreddit.DoesNotExist:
+        subreddit = Subreddit(
+            name=name,
+        )
 
     subreddit.id = None
     subreddit.color = None
