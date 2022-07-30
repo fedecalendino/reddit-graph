@@ -6,3 +6,4 @@ class SubredditType(BaseEnum):
     PRIVATE = "private"
     BANNED = "banned"
     NON_EXISTENT = "non-existent"
+    ERROR = "error"

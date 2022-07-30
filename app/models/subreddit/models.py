@@ -3,13 +3,12 @@ import logging
 from django.db import models
 
 from app.models import fields
-from app.models.base import BaseModel
 from .enums import SubredditType
 
 logger = logging.getLogger(__name__)
 
 
-class Subreddit(BaseModel):
+class Subreddit(models.Model):
     class Meta:
         db_table = "subreddits"
 
@@ -39,6 +38,11 @@ class Subreddit(BaseModel):
         null=True,
     )
 
+    last_update = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
     nsfw = models.BooleanField(
         default=False,
     )
@@ -48,7 +52,7 @@ class Subreddit(BaseModel):
     )
 
     subscribers = models.IntegerField(
-        default=0,
+        default=-1,
     )
 
     title = models.TextField(
@@ -62,11 +66,16 @@ class Subreddit(BaseModel):
         max_length=SubredditType.max_length(),
     )
 
+    created_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
     # Properties
     @property
-    def url(self):
+    def url(self) -> str:
         return f"https://reddit.com/r/{self.name}"
 
     # Methods
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name}"
