@@ -14,6 +14,12 @@ class Subreddit(BaseModel):
         db_table = "subreddits"
 
     # Fields
+    name = models.CharField(
+        max_length=100,
+        primary_key=True,
+        unique=True,
+    )
+
     color = models.CharField(
         blank=True,
         default=None,
@@ -27,9 +33,10 @@ class Subreddit(BaseModel):
         null=True,
     )
 
-    name = models.CharField(
+    id = models.CharField(
+        blank=True,
         max_length=100,
-        unique=True,
+        null=True,
     )
 
     nsfw = models.BooleanField(

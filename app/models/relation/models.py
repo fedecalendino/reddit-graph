@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 from django.db import models
 
@@ -15,6 +16,13 @@ class Relation(BaseModel):
         db_table = "relations"
 
     # Fields
+    id = models.CharField(
+        default=uuid.uuid4,
+        max_length=36,
+        primary_key=True,
+        unique=True,
+    )
+
     type = fields.EnumField(
         RelationType,
         max_length=RelationType.max_length(),
