@@ -1,10 +1,11 @@
 import logging
-import uuid
 
 from django.db import models
 
-from .base import BaseModel
-from .subreddit import Subreddit
+from app.models import fields
+from app.models.base import BaseModel
+from app.models.subreddit import Subreddit
+from .enums import RelationType
 
 logger = logging.getLogger(__name__)
 
@@ -14,8 +15,9 @@ class Relation(BaseModel):
         db_table = "relations"
 
     # Fields
-    type = models.CharField(
-        max_length=100,
+    type = fields.EnumField(
+        RelationType,
+        max_length=RelationType.max_length(),
     )
 
     # Relations
