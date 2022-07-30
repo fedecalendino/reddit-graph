@@ -61,6 +61,7 @@ def _process_public_subreddit(sub) -> Subreddit:
     subreddit.type = SubredditType.PUBLIC
 
     subreddit.save()
+    logger.info("Saved %s", subreddit.name)
 
     return subreddit
 

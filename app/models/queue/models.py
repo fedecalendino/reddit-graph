@@ -13,7 +13,7 @@ class Queue(BaseModel):
 
     # Fields
     name = models.CharField(
-        max_length=100,
+        max_length=25,
         primary_key=True,
         unique=True,
     )
