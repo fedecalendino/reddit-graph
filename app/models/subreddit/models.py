@@ -44,11 +44,15 @@ class Subreddit(models.Model):
     )
 
     nsfw = models.BooleanField(
+        blank=True,
         default=False,
+        null=True,
     )
 
     quarantined = models.BooleanField(
+        blank=True,
         default=False,
+        null=True,
     )
 
     subscribers = models.IntegerField(
