@@ -49,6 +49,7 @@ def fetch_subreddit(name: str) -> Subreddit:
 
     name = name.lower()
 
+    logger.info("")
     logger.info("Fetching subreddit /r/%s", name)
 
     try:
@@ -139,29 +140,40 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
     excluded = {sub.display_name.lower()} | EXCLUDED
 
     relations = {
-        RelationType.SIDEBAR: set(_fetch_relations_sidebar(sub, excluded)),
-        RelationType.TOPBAR: set(_fetch_relations_topbar(sub, excluded)),
-        RelationType.WIKI: set(_fetch_relations_wiki(sub, excluded)),
+        RelationType.SIDEBAR: _fetch_relations_sidebar(sub, excluded),
+        RelationType.TOPBAR: _fetch_relations_topbar(sub, excluded),
+        RelationType.WIKI: _fetch_relations_wiki(sub, excluded),
     }
 
     for relation_type, related_subreddits in relations.items():
-        for related_subreddit in related_subreddits:
-            try:
-                relation = Relation.objects.get(
-                    source=subreddit.name,
-                    target=related_subreddit,
-                    type=relation_type,
-                )
-            except Relation.DoesNotExist:
-                relation = Relation(
-                    source=subreddit.name,
-                    target=related_subreddit,
-                    type=relation_type,
-                )
+        logger.info(" * Fetching %s related subreddits", relation_type)
 
-            relation.last_update = timezone.now()
-            relation.save()
-            logger.info("Saved %s", relation)
+        for related_subreddit in set(related_subreddits):
+            try:
+                try:
+                    relation = Relation.objects.get(
+                        source=subreddit.name,
+                        target=related_subreddit,
+                        type=relation_type,
+                    )
+                except Relation.DoesNotExist:
+                    relation = Relation(
+                        source=subreddit.name,
+                        target=related_subreddit,
+                        type=relation_type,
+                    )
+
+                relation.last_update = timezone.now()
+                relation.save()
+                logger.info("Saved %s", relation)
+            except Exception as exc:
+                logger.error(
+                    "Error with %s > [%s] > %s: %s",
+                    subreddit.name,
+                    relation_type,
+                    related_subreddit,
+                    str(exc),
+                )
 
     return relations
 
@@ -206,7 +218,9 @@ def _fetch_relations_topbar(sub, excluded: Set[str]) -> Iterable[str]:
 
 def _fetch_relations_wiki(sub, excluded: Set[str]) -> Iterable[str]:
     try:
-        for wikipage in sub.wiki:
+        for index, wikipage in enumerate(sub.wiki):
+            logger.info("    %s. %s", index, wikipage.name)
+
             yield from filter(
                 lambda name: name not in excluded,
                 re.findall(
