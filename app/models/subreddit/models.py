@@ -26,6 +26,11 @@ class Subreddit(models.Model):
         null=True,
     )
 
+    created_at = models.DateTimeField(
+        blank=True,
+        null=True,
+    )
+
     icon_url = models.URLField(
         blank=True,
         default=None,
@@ -70,9 +75,8 @@ class Subreddit(models.Model):
         max_length=SubredditType.max_length(),
     )
 
-    created_at = models.DateTimeField(
-        blank=True,
-        null=True,
+    version = models.IntegerField(
+        default=0,
     )
 
     # Properties

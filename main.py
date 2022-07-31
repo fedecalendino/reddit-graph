@@ -2,6 +2,6 @@ import django
 
 django.setup()
 
-from app.jobs import clear_queue, fill_queue
+from app.jobs import main
 
-clear_queue.run()
+main.run()
