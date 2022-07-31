@@ -32,7 +32,9 @@ def run():
         logger.info("Next %s", current.name)
 
         subreddit = fetch_subreddit(current.name)
-        _update_queue(subreddit)
+
+        if subreddit:
+            _update_queue(subreddit)
 
         logger.info("Dequeued %s", current.name)
         current.delete()
