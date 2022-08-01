@@ -104,4 +104,4 @@ class Subreddit(models.Model):
 
     # Methods
     def __str__(self) -> str:
-        return f"{self.name}"
+        return f"{self.name} [{self.type}]{('', '[🔞️]')[self.nsfw is True]}"

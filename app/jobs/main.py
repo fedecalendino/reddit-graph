@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Iterable, Set
 
 import pytz
@@ -18,32 +18,31 @@ logger = logging.getLogger(__name__)
 
 
 def run():
-    for i in range(20):
-        subreddit = fetch_subreddit_random(nsfw=i % 4 == 0)
-        _update_queue(subreddit)
+    number = 0
 
     while True:
+        number += 1
         current = Queue.objects.first()
 
-        if not current:
-            logger.info("Queue cleared")
-            break
+        if current:
+            logger.info("%d. fetching %s", number, current.name)
+            subreddit = fetch_subreddit(current.name)
+        else:
+            nsfw = number % 4 == 0
 
-        logger.info("Next %s", current.name)
-
-        subreddit = fetch_subreddit(current.name)
+            logger.info("%d. fetching %s", number, ("random", "randnsfw")[nsfw])
+            subreddit = fetch_subreddit_random(nsfw)
 
         if subreddit:
             _update_queue(subreddit)
 
-        logger.info("Dequeued %s", current.name)
-        current.delete()
+        logger.info(" -> dequeued %s \n\n", current.name)
 
-        logger.info("")
+        current.delete()
 
 
 def fetch_subreddit_random(nsfw: bool = False) -> Subreddit:
-    logger.info("Fetching random subreddit (nsfw = %s)", nsfw)
+    logger.info("fetching random subreddit (nsfw = %s)", nsfw)
     return fetch_subreddit("random" if not nsfw else "randnsfw")
 
 
@@ -53,7 +52,7 @@ def fetch_subreddit(name: str) -> Subreddit:
 
     name = name.lower()
 
-    logger.info("Fetching subreddit /r/%s", name)
+    logger.info("searching for subreddit /r/%s", name)
 
     try:
         sub = reddit.subreddit(name)
@@ -104,7 +103,7 @@ def _process_public_subreddit(sub) -> Subreddit:
 
     subreddit.save()
 
-    logger.info("Saved %s", subreddit.name)
+    logger.info("saved %s", subreddit)
 
     fetch_relations(subreddit)
 
@@ -138,6 +137,8 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
 
     subreddit.save()
 
+    logger.info("saved %s", subreddit)
+
     return subreddit
 
 
@@ -155,9 +156,9 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
     }
 
     for relation_type, related_subreddits in relations.items():
-        logger.info(" * Fetching %s related subreddits", relation_type)
+        logger.info(" * fetching %s related subreddits", relation_type)
 
-        for related_subreddit in set(related_subreddits):
+        for related_subreddit in sorted(set(related_subreddits)):
             try:
                 try:
                     relation = Relation.objects.get(
@@ -174,10 +175,11 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
 
                 relation.last_update = timezone.now()
                 relation.save()
-                logger.info("Saved %s", relation)
+
+                logger.info("saved %s", relation)
             except Exception as exc:
                 logger.error(
-                    "Error with %s > [%s] > %s: %s",
+                    "error with %s > [%s] > %s: %s",
                     subreddit.name,
                     relation_type,
                     related_subreddit,
@@ -246,7 +248,28 @@ def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 100) -> Iterable
 
 
 def _update_queue(subreddit: Subreddit):
-    for relation in Relation.objects.filter(source=subreddit.name).all():
-        if not Subreddit.objects.filter(name=relation.target).first():
-            Queue.objects.get_or_create(name=relation.target)
-            logger.info("Queue %s", relation.target)
+    now = timezone.now()
+    threshold = now + timedelta(days=-5)
+
+    for relation in (
+        Relation.objects.filter(source=subreddit.name).order_by("target").all()
+    ):
+        try:
+            related = Subreddit.objects.filter(name=relation.target).get()
+
+            if related.last_update < threshold:
+                queue = True
+                message = "queued outdated subreddit %s"
+            else:
+                queue = False
+                message = ""
+
+        except Subreddit.DoesNotExist:
+            queue = True
+            message = "queued new subreddit %s"
+
+        if queue:
+            item, created = Queue.objects.get_or_create(name=relation.target)
+
+            if created:
+                logger.info(message, item)
