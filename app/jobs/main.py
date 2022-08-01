@@ -218,9 +218,12 @@ def _fetch_relations_topbar(sub, excluded: Set[str]) -> Iterable[str]:
             )
 
 
-def _fetch_relations_wiki(sub, excluded: Set[str]) -> Iterable[str]:
+def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 100) -> Iterable[str]:
     try:
         for index, wikipage in enumerate(sub.wiki):
+            if index == limit:
+                break
+            
             logger.info("    %s. %s", index, wikipage.name)
 
             yield from filter(
