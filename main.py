@@ -33,22 +33,22 @@ def start_runner():
         not_started = True
 
         while not_started:
-            print('Checking if server is alive...')
+            print("Checking if server is alive...")
 
             try:
-                r = requests.get(f'http://{IP}:{PORT}/heartbeat')
+                r = requests.get(f"http://{IP}:{PORT}/heartbeat")
 
                 if r.status_code == 200:
-                    print('Server started...')
+                    print("Server started...")
                     not_started = False
 
                 print(r.status_code)
             except:
-                print('Server not yet started...')
+                print("Server not yet started...")
 
             sleep(1)
 
-    print('Started runner')
+    print("Started runner")
     start_loop_thread = Thread(target=start_loop)
     start_loop_thread.start()
 
@@ -57,13 +57,13 @@ def start_runner():
 
 import os
 
-PORT = int(os.environ.get('PORT', 5000))
-IP = '127.0.0.1' if PORT == 5000 else '0.0.0.0'
+PORT = int(os.environ.get("PORT", 5000))
+IP = "127.0.0.1" if PORT == 5000 else "0.0.0.0"
 
 
 if __name__ == "__main__":
     start_runner()
 
     app.jinja_env.auto_reload = True
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.config["TEMPLATES_AUTO_RELOAD"] = True
     app.run(host=IP, port=PORT)

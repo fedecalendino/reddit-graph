@@ -31,7 +31,25 @@ class Subreddit(models.Model):
         null=True,
     )
 
-    icon_url = models.URLField(
+    description = models.TextField(
+        blank=True,
+        default=None,
+        null=True,
+    )
+
+    img_banner = models.URLField(
+        blank=True,
+        default=None,
+        null=True,
+    )
+
+    img_header = models.URLField(
+        blank=True,
+        default=None,
+        null=True,
+    )
+
+    img_icon = models.URLField(
         blank=True,
         default=None,
         null=True,

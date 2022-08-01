@@ -39,6 +39,8 @@ def run():
         logger.info("Dequeued %s", current.name)
         current.delete()
 
+        logger.info("")
+
 
 def fetch_subreddit_random(nsfw: bool = False) -> Subreddit:
     logger.info("Fetching random subreddit (nsfw = %s)", nsfw)
@@ -51,7 +53,6 @@ def fetch_subreddit(name: str) -> Subreddit:
 
     name = name.lower()
 
-    logger.info("")
     logger.info("Fetching subreddit /r/%s", name)
 
     try:
@@ -89,14 +90,17 @@ def _process_public_subreddit(sub) -> Subreddit:
     subreddit.created_at = datetime.utcfromtimestamp(sub.created_utc).replace(
         tzinfo=pytz.UTC
     )
-    subreddit.icon_url = sub.icon_img
+    subreddit.description = sub.description
+    subreddit.img_banner = sub.banner_background_image
+    subreddit.img_header = sub.header_img
+    subreddit.img_icon = sub.icon_img
     subreddit.last_update = timezone.now()
     subreddit.nsfw = sub.over18
     subreddit.quarantined = sub.quarantine
     subreddit.subscribers = sub.subscribers
     subreddit.title = sub.title
     subreddit.type = SubredditType.PUBLIC
-    subreddit.version = 0
+    subreddit.version = 1
 
     subreddit.save()
 
@@ -120,14 +124,17 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
     subreddit.id = None
     subreddit.color = None
     subreddit.created_at = None
-    subreddit.icon_url = None
+    subreddit.description = None
+    subreddit.img_banner = None
+    subreddit.img_header = None
+    subreddit.img_icon = None
     subreddit.last_update = timezone.now()
     subreddit.nsfw = None
     subreddit.quarantined = None
     subreddit.subscribers = -1
     subreddit.title = None
     subreddit.type = type_
-    subreddit.version = 0
+    subreddit.version = 1
 
     subreddit.save()
 
@@ -223,7 +230,7 @@ def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 100) -> Iterable
         for index, wikipage in enumerate(sub.wiki):
             if index == limit:
                 break
-            
+
             logger.info("    %s. %s", index, wikipage.name)
 
             yield from filter(
