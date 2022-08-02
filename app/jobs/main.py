@@ -174,6 +174,7 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
                     )
 
                 relation.last_update = timezone.now()
+                relation.version = 1
                 relation.save()
 
                 logger.info("saved %s", relation)
@@ -227,11 +228,15 @@ def _fetch_relations_topbar(sub, excluded: Set[str]) -> Iterable[str]:
             )
 
 
-def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 100) -> Iterable[str]:
+def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 250) -> Iterable[str]:
     try:
         for index, wikipage in enumerate(sub.wiki):
             if index == limit:
                 break
+
+            if wikipage.name.startswith("config"):
+                logger.info("    %s. %s (skipped)", index, wikipage.name)
+                continue
 
             logger.info("    %s. %s", index, wikipage.name)
 
