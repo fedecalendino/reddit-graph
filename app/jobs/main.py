@@ -47,6 +47,12 @@ def fetch_subreddit_random(nsfw: bool = False) -> Subreddit:
 
 
 def fetch_subreddit(name: str) -> Subreddit:
+    if len(name) < 2:
+        return None
+
+    if not re.findall(SUBREDDIT_REGEX, f"/r/{name.lower()}", flags=re.IGNORECASE):
+        return None
+
     if name in EXCLUDED:
         return None
 
@@ -93,12 +99,12 @@ def _process_public_subreddit(sub) -> Subreddit:
     subreddit.img_banner = sub.banner_background_image
     subreddit.img_header = sub.header_img
     subreddit.img_icon = sub.icon_img
-    subreddit.last_update = timezone.now()
     subreddit.nsfw = sub.over18
     subreddit.quarantined = sub.quarantine
     subreddit.subscribers = sub.subscribers
     subreddit.title = sub.title
     subreddit.type = SubredditType.PUBLIC
+    subreddit.updated_at = timezone.now()
     subreddit.version = 1
 
     subreddit.save()
@@ -127,12 +133,12 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
     subreddit.img_banner = None
     subreddit.img_header = None
     subreddit.img_icon = None
-    subreddit.last_update = timezone.now()
     subreddit.nsfw = None
     subreddit.quarantined = None
     subreddit.subscribers = -1
     subreddit.title = None
     subreddit.type = type_
+    subreddit.updated_at = timezone.now()
     subreddit.version = 1
 
     subreddit.save()
@@ -173,7 +179,7 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
                         type=relation_type,
                     )
 
-                relation.last_update = timezone.now()
+                relation.updated_at = timezone.now()
                 relation.version = 1
                 relation.save()
 
@@ -229,10 +235,17 @@ def _fetch_relations_topbar(sub, excluded: Set[str]) -> Iterable[str]:
 
 
 def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 250) -> Iterable[str]:
-    try:
-        for index, wikipage in enumerate(sub.wiki):
-            if index == limit:
+    index = 0
+    errors = 0
+
+    iterator = iter(sub.wiki)
+
+    while index < limit:
+        try:
+            if errors == 3:
                 break
+
+            wikipage = next(iterator)
 
             if wikipage.name.startswith("config"):
                 logger.info("    %s. %s (skipped)", index, wikipage.name)
@@ -248,8 +261,12 @@ def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 250) -> Iterable
                     flags=re.IGNORECASE,
                 ),
             )
-    except Forbidden:
-        pass
+
+            index += 1
+            errors = 0
+        except Exception as exc:
+            errors += 1
+            logger.info("    %s. %s (error)", index, str(exc))
 
 
 def _update_queue(subreddit: Subreddit):
@@ -262,7 +279,7 @@ def _update_queue(subreddit: Subreddit):
         try:
             related = Subreddit.objects.filter(name=relation.target).get()
 
-            if related.last_update < threshold:
+            if related.updated_at < threshold:
                 queue = False  # TODO : Disabled temporarily
                 message = "queued outdated subreddit %s"
             else:

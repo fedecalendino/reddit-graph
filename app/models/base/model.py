@@ -8,7 +8,9 @@ class BaseModel(models.Model):
     # Fields
     created_at = models.DateTimeField(
         auto_now_add=True,
+        blank=True,
         editable=False,
+        null=True,
     )
 
     updated_at = models.DateTimeField(

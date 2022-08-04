@@ -2,13 +2,14 @@ import logging
 
 from django.db import models
 
+from app.models import base
 from app.models import fields
 from .enums import SubredditType
 
 logger = logging.getLogger(__name__)
 
 
-class Subreddit(models.Model):
+class Subreddit(base.BaseModel):
     class Meta:
         db_table = "subreddits"
 
@@ -23,11 +24,6 @@ class Subreddit(models.Model):
         blank=True,
         default=None,
         max_length=7,
-        null=True,
-    )
-
-    created_at = models.DateTimeField(
-        blank=True,
         null=True,
     )
 
@@ -58,11 +54,6 @@ class Subreddit(models.Model):
     id = models.CharField(
         blank=True,
         max_length=100,
-        null=True,
-    )
-
-    last_update = models.DateTimeField(
-        blank=True,
         null=True,
     )
 

@@ -1,8 +1,8 @@
-from time import sleep
 from threading import Thread
+from time import sleep
+
 import requests
 from flask import Flask
-
 
 # Flask =========================================================================
 app = Flask(__name__)
