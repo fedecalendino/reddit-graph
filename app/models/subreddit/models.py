@@ -95,4 +95,4 @@ class Subreddit(base.BaseModel):
 
     # Methods
     def __str__(self) -> str:
-        return f"{self.name} [{self.type}]{('', '[🔞️]')[self.nsfw is True]}"
+        return f"{self.name} [{self.type}][{self.subscribers}]{('', '[🔞️]')[self.nsfw is True]}"
