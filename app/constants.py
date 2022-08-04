@@ -1,4 +1,4 @@
-SUBREDDIT_REGEX = r"""/r/([a-zA-Z0-9_]*).*"""
+SUBREDDIT_REGEX = r"""/r/([a-zA-Z0-9][a-zA-Z0-9_]{1,}).*"""
 
 EXCLUDED = {
     "",

@@ -46,14 +46,21 @@ def fetch_subreddit_random(nsfw: bool = False) -> Subreddit:
     return fetch_subreddit("random" if not nsfw else "randnsfw")
 
 
-def fetch_subreddit(name: str) -> Subreddit:
-    if len(name) < 2:
-        return None
-
+def is_valid_subreddit_name(name: str, extra_exclusions: Set[str] = None) -> bool:
     if not re.findall(SUBREDDIT_REGEX, f"/r/{name.lower()}", flags=re.IGNORECASE):
-        return None
+        return False
 
     if name in EXCLUDED:
+        return False
+
+    if name in (extra_exclusions or set()):
+        return False
+
+    return True
+
+
+def fetch_subreddit(name: str) -> Subreddit:
+    if not is_valid_subreddit_name(name):
         return None
 
     name = name.lower()
@@ -165,6 +172,9 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
         logger.info(" * fetching %s related subreddits", relation_type)
 
         for related_subreddit in sorted(set(related_subreddits)):
+            if not is_valid_subreddit_name(related_subreddit):
+                continue
+
             try:
                 try:
                     relation = Relation.objects.get(
