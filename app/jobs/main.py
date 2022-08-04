@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Iterable, Set
 
 import pytz
@@ -36,7 +36,7 @@ def run():
         if subreddit:
             _update_queue(subreddit)
 
-        logger.info(" -> dequeued %s \n\n", current.name)
+        logger.info("%d. dequeued %s \n\n", number, current.name)
 
         current.delete()
 
@@ -65,7 +65,7 @@ def fetch_subreddit(name: str) -> Subreddit:
 
     name = name.lower()
 
-    logger.info("searching for subreddit /r/%s", name)
+    logger.info("  > searching for subreddit /r/%s", name)
 
     try:
         sub = reddit.subreddit(name)
@@ -116,7 +116,7 @@ def _process_public_subreddit(sub) -> Subreddit:
 
     subreddit.save()
 
-    logger.info("saved %s", subreddit)
+    logger.info("  > saved %s", subreddit)
 
     fetch_relations(subreddit)
 
@@ -150,7 +150,7 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
 
     subreddit.save()
 
-    logger.info("saved %s", subreddit)
+    logger.info("  > saved %s", subreddit)
 
     return subreddit
 
@@ -169,7 +169,10 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
     }
 
     for relation_type, related_subreddits in relations.items():
-        logger.info(" * fetching %s related subreddits", relation_type)
+        new_relations = []
+        updated_relations = []
+
+        logger.info("    * fetching %s related subreddits", relation_type)
 
         for related_subreddit in sorted(set(related_subreddits)):
             if not is_valid_subreddit_name(related_subreddit):
@@ -182,26 +185,56 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
                         target=related_subreddit,
                         type=relation_type,
                     )
+                    updated_relations.append(relation)
+                    # logger.info("      - updating %s", relation)
                 except Relation.DoesNotExist:
                     relation = Relation(
                         source=subreddit.name,
                         target=related_subreddit,
                         type=relation_type,
                     )
+                    new_relations.append(relation)
+                    # logger.info("      - adding %s", relation)
 
                 relation.updated_at = timezone.now()
                 relation.version = 1
-                relation.save()
-
-                logger.info("saved %s", relation)
             except Exception as exc:
                 logger.error(
-                    "error with %s > [%s] > %s: %s",
+                    "      - error with %s > [%s] > %s: %s",
                     subreddit.name,
                     relation_type,
                     related_subreddit,
                     str(exc),
                 )
+
+        logger.info(
+            "    * saving %s %s relations",
+            relation_type,
+            len(new_relations) + len(updated_relations),
+        )
+
+        if new_relations:
+            Relation.objects.bulk_create(
+                new_relations,
+                batch_size=250,
+            )
+            logger.info(
+                "    * created %s new %s relations",
+                len(new_relations),
+                relation_type,
+            )
+
+        if updated_relations:
+            Relation.objects.bulk_update(
+                updated_relations,
+                batch_size=250,
+                fields=["updated_at", "version"],
+            )
+            logger.info(
+                "    * updated %s %s relations",
+                len(updated_relations),
+                relation_type,
+            )
 
     return relations
 
@@ -258,10 +291,10 @@ def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 250) -> Iterable
             wikipage = next(iterator)
 
             if wikipage.name.startswith("config"):
-                logger.info("    %s. %s (skipped)", index, wikipage.name)
+                logger.info("      > %s. %s (skipped)", index, wikipage.name)
                 continue
 
-            logger.info("    %s. %s", index, wikipage.name)
+            logger.info("      > %s. %s", index, wikipage.name)
 
             yield from filter(
                 lambda name: name not in excluded,
@@ -276,32 +309,27 @@ def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 250) -> Iterable
             errors = 0
         except Exception as exc:
             errors += 1
-            logger.info("    %s. %s (error)", index, str(exc))
+            logger.info("      > %s. %s (error)", index, str(exc))
 
 
 def _update_queue(subreddit: Subreddit):
-    now = timezone.now()
-    threshold = now + timedelta(days=-5)
+    targets = set(
+        Relation.objects.filter(source=subreddit.name)
+        .exclude(target__in=Subreddit.objects.values("name").all())
+        .exclude(target__in=Queue.objects.values("name").all())
+        .order_by("target")
+        .values_list("target", flat=True)
+        .all()
+    )
 
-    for relation in (
-        Relation.objects.filter(source=subreddit.name).order_by("target").all()
-    ):
-        try:
-            related = Subreddit.objects.filter(name=relation.target).get()
+    items = []
 
-            if related.updated_at < threshold:
-                queue = False  # TODO : Disabled temporarily
-                message = "queued outdated subreddit %s"
-            else:
-                queue = False
-                message = ""
+    for target in targets:
+        items.append(Queue(name=target))
 
-        except Subreddit.DoesNotExist:
-            queue = True
-            message = "queued new subreddit %s"
+    if not items:
+        return
 
-        if queue:
-            item, created = Queue.objects.get_or_create(name=relation.target)
-
-            if created:
-                logger.info(message, item)
+    logger.info("    + queuing %s names", len(items))
+    Queue.objects.bulk_create(items, batch_size=250)
+    logger.info("    + queued %s names", len(items))
