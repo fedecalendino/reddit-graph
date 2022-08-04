@@ -263,7 +263,7 @@ def _update_queue(subreddit: Subreddit):
             related = Subreddit.objects.filter(name=relation.target).get()
 
             if related.last_update < threshold:
-                queue = True
+                queue = False  # TODO : Disabled temporarily
                 message = "queued outdated subreddit %s"
             else:
                 queue = False
