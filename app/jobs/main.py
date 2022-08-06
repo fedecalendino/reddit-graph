@@ -47,6 +47,9 @@ def fetch_subreddit_random(nsfw: bool = False) -> Subreddit:
 
 
 def is_valid_subreddit_name(name: str, extra_exclusions: Set[str] = None) -> bool:
+    if len(name) > 25:
+        return False
+
     if not re.findall(SUBREDDIT_REGEX, f"/r/{name.lower()}", flags=re.IGNORECASE):
         return False
 
