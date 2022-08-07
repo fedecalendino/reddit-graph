@@ -72,11 +72,13 @@ def fetch_subreddit(name: str) -> Subreddit:
 
     try:
         sub = reddit.subreddit(name)
+        quarantined = False
 
         if sub.quarantine:
+            quarantined = True
             sub.quaran.opt_in()
 
-        return _process_public_subreddit(sub)
+        return _process_public_subreddit(sub, quarantined)
     except Forbidden:
         type_ = SubredditType.PRIVATE
     except NotFound:
@@ -90,7 +92,7 @@ def fetch_subreddit(name: str) -> Subreddit:
     return _process_non_public_subreddit(name, type_)
 
 
-def _process_public_subreddit(sub) -> Subreddit:
+def _process_public_subreddit(sub, quarantined: bool = False) -> Subreddit:
     try:
         subreddit = Subreddit.objects.get(
             name=sub.display_name.lower(),
@@ -110,12 +112,12 @@ def _process_public_subreddit(sub) -> Subreddit:
     subreddit.img_header = sub.header_img
     subreddit.img_icon = sub.icon_img
     subreddit.nsfw = sub.over18
-    subreddit.quarantined = sub.quarantine
+    subreddit.quarantined = quarantined
     subreddit.subscribers = sub.subscribers
     subreddit.title = sub.title
     subreddit.type = SubredditType.PUBLIC
     subreddit.updated_at = timezone.now()
-    subreddit.version = 1
+    subreddit.version = 2
 
     subreddit.save()
 
@@ -149,7 +151,7 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
     subreddit.title = None
     subreddit.type = type_
     subreddit.updated_at = timezone.now()
-    subreddit.version = 1
+    subreddit.version = 2
 
     subreddit.save()
 
