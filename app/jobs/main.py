@@ -1,6 +1,6 @@
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, Iterable, Set
 
 import pytz
@@ -42,7 +42,7 @@ def run():
 
 
 def fetch_subreddit_random(nsfw: bool = False) -> Subreddit:
-    logger.info("fetching random subreddit (nsfw = %s)", nsfw)
+    logger.debug("fetching random subreddit (nsfw = %s)", nsfw)
     return fetch_subreddit("random" if not nsfw else "randnsfw")
 
 
@@ -119,7 +119,7 @@ def _process_public_subreddit(sub) -> Subreddit:
 
     subreddit.save()
 
-    logger.info("  > saved %s", subreddit)
+    logger.debug("  > saved %s", subreddit)
 
     fetch_relations(subreddit)
 
@@ -153,7 +153,7 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
 
     subreddit.save()
 
-    logger.info("  > saved %s", subreddit)
+    logger.debug("  > saved %s", subreddit)
 
     return subreddit
 
@@ -175,7 +175,7 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
         new_relations = []
         updated_relations = []
 
-        logger.info("    * fetching %s related subreddits", relation_type)
+        logger.debug("    * fetching %s related subreddits", relation_type)
 
         for related_subreddit in sorted(set(related_subreddits)):
             if not is_valid_subreddit_name(related_subreddit):
@@ -210,7 +210,7 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
                     str(exc),
                 )
 
-        logger.info(
+        logger.debug(
             "    * saving %s %s relations",
             relation_type,
             len(new_relations) + len(updated_relations),
@@ -221,7 +221,7 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
                 new_relations,
                 batch_size=250,
             )
-            logger.info(
+            logger.debug(
                 "    * created %s new %s relations",
                 len(new_relations),
                 relation_type,
@@ -233,7 +233,7 @@ def fetch_relations(subreddit: Subreddit) -> Dict:
                 batch_size=250,
                 fields=["updated_at", "version"],
             )
-            logger.info(
+            logger.debug(
                 "    * updated %s %s relations",
                 len(updated_relations),
                 relation_type,
@@ -294,10 +294,10 @@ def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 250) -> Iterable
             wikipage = next(iterator)
 
             if wikipage.name.startswith("config"):
-                logger.info("      > %s. %s (skipped)", index, wikipage.name)
+                logger.debug("      > %s. %s (skipped)", index, wikipage.name)
                 continue
 
-            logger.info("      > %s. %s", index, wikipage.name)
+            logger.debug("      > %s. %s", index, wikipage.name)
 
             yield from filter(
                 lambda name: name not in excluded,
@@ -312,13 +312,20 @@ def _fetch_relations_wiki(sub, excluded: Set[str], limit: int = 250) -> Iterable
             errors = 0
         except Exception as exc:
             errors += 1
-            logger.info("      > %s. %s (error)", index, str(exc))
+            logger.debug("      > %s. %s (error)", index, str(exc))
 
 
 def _update_queue(subreddit: Subreddit):
     targets = set(
         Relation.objects.filter(source=subreddit.name)
-        .exclude(target__in=Subreddit.objects.values("name").all())
+        .exclude(
+            target__in=(
+                Subreddit.objects
+                .filter(updated_at__lte=datetime.utcnow() - timedelta(days=-5))
+                .values("name")
+                .all()
+            )
+        )
         .exclude(target__in=Queue.objects.values("name").all())
         .order_by("target")
         .values_list("target", flat=True)
@@ -333,6 +340,6 @@ def _update_queue(subreddit: Subreddit):
     if not items:
         return
 
-    logger.info("    + queuing %s names", len(items))
+    logger.debug("    + queuing %s names", len(items))
     Queue.objects.bulk_create(items, batch_size=250)
     logger.info("    + queued %s names", len(items))
