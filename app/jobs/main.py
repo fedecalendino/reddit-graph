@@ -36,9 +36,9 @@ def run():
         if subreddit:
             _update_queue(subreddit)
 
-        logger.info("%d. dequeued %s \n\n", number, current.name)
-
-        current.delete()
+        if current:
+            logger.info("%d. dequeued %s \n\n", number, current.name)
+            current.delete()
 
 
 def fetch_subreddit_random(nsfw: bool = False) -> Subreddit:
