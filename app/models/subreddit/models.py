@@ -95,4 +95,12 @@ class Subreddit(base.BaseModel):
 
     # Methods
     def __str__(self) -> str:
-        return f"{self.name} [{self.type}][{self.subscribers}]{('', '[🔞️]')[self.nsfw is True]}"
+        string = f"/r/{self.name} [{self.type}][subs={self.subscribers}]"
+
+        if self.nsfw:
+            string = f"{string}[nsfw]"
+
+        if self.quarantined:
+            string = f"{string}[quarantined]"
+
+        return string

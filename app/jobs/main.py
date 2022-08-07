@@ -35,9 +35,9 @@ def run():
 
         if subreddit:
             _update_queue(subreddit)
+            logger.info("%d. fetched %s",number, subreddit)
 
         if current:
-            logger.info("%d. dequeued %s \n\n", number, current.name)
             current.delete()
 
 
@@ -68,22 +68,20 @@ def fetch_subreddit(name: str) -> Subreddit:
 
     name = name.lower()
 
-    logger.info("  > searching for subreddit /r/%s", name)
-
     try:
         sub = reddit.subreddit(name)
-        quarantined = False
 
-        if sub.quarantine:
-            quarantined = True
+        try:
+            sub.quarantine
+        except Forbidden as exc:
             sub.quaran.opt_in()
 
-        return _process_public_subreddit(sub, quarantined)
-    except Forbidden:
+        return _process_public_subreddit(sub)
+    except Forbidden as exc:
         type_ = SubredditType.PRIVATE
-    except NotFound:
+    except NotFound as exc:
         type_ = SubredditType.BANNED
-    except Redirect:
+    except Redirect as exc:
         type_ = SubredditType.NON_EXISTENT
     except Exception as exc:
         logger.error(exc)
@@ -92,7 +90,7 @@ def fetch_subreddit(name: str) -> Subreddit:
     return _process_non_public_subreddit(name, type_)
 
 
-def _process_public_subreddit(sub, quarantined: bool = False) -> Subreddit:
+def _process_public_subreddit(sub) -> Subreddit:
     try:
         subreddit = Subreddit.objects.get(
             name=sub.display_name.lower(),
@@ -112,7 +110,7 @@ def _process_public_subreddit(sub, quarantined: bool = False) -> Subreddit:
     subreddit.img_header = sub.header_img
     subreddit.img_icon = sub.icon_img
     subreddit.nsfw = sub.over18
-    subreddit.quarantined = quarantined
+    subreddit.quarantined = sub.quarantine
     subreddit.subscribers = sub.subscribers
     subreddit.title = sub.title
     subreddit.type = SubredditType.PUBLIC
@@ -120,8 +118,6 @@ def _process_public_subreddit(sub, quarantined: bool = False) -> Subreddit:
     subreddit.version = 2
 
     subreddit.save()
-
-    logger.debug("  > saved %s", subreddit)
 
     fetch_relations(subreddit)
 
@@ -154,8 +150,6 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
     subreddit.version = 2
 
     subreddit.save()
-
-    logger.debug("  > saved %s", subreddit)
 
     return subreddit
 
@@ -323,7 +317,7 @@ def _update_queue(subreddit: Subreddit):
         .exclude(
             target__in=(
                 Subreddit.objects
-                .filter(updated_at__lte=datetime.utcnow() - timedelta(days=-5))
+                # .filter(updated_at__lte=datetime.utcnow() - timedelta(days=-5))
                 .values("name")
                 .all()
             )
