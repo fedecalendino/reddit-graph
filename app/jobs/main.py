@@ -105,7 +105,7 @@ def _process_public_subreddit(sub) -> Subreddit:
     subreddit.created_at = datetime.utcfromtimestamp(sub.created_utc).replace(
         tzinfo=pytz.UTC
     )
-    subreddit.description = sub.description
+    subreddit.description = sub.public_description
     subreddit.img_banner = sub.banner_background_image
     subreddit.img_header = sub.header_img
     subreddit.img_icon = sub.icon_img
@@ -115,7 +115,7 @@ def _process_public_subreddit(sub) -> Subreddit:
     subreddit.title = sub.title
     subreddit.type = SubredditType.PUBLIC
     subreddit.updated_at = timezone.now()
-    subreddit.version = 2
+    subreddit.version = 3
 
     subreddit.save()
 
@@ -136,7 +136,7 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
 
     subreddit.type = type_
     subreddit.updated_at = timezone.now()
-    subreddit.version = 2
+    subreddit.version = 3
 
     subreddit.save()
 
@@ -306,7 +306,7 @@ def _update_queue(subreddit: Subreddit):
         .exclude(
             target__in=(
                 Subreddit.objects.filter(
-                    updated_at__gt=timezone.now() - timedelta(days=10)
+                    updated_at__gt=timezone.now() - timedelta(days=14)
                 )
                 .values("name")
                 .all()
