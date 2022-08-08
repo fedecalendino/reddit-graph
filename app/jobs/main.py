@@ -35,7 +35,7 @@ def run():
 
         if subreddit:
             _update_queue(subreddit)
-            logger.info("%d. fetched %s",number, subreddit)
+            logger.info("%d. fetched %s", number, subreddit)
 
         if current:
             current.delete()
@@ -134,17 +134,6 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
             name=name,
         )
 
-    subreddit.id = None
-    subreddit.color = None
-    subreddit.created_at = None
-    subreddit.description = None
-    subreddit.img_banner = None
-    subreddit.img_header = None
-    subreddit.img_icon = None
-    subreddit.nsfw = None
-    subreddit.quarantined = None
-    subreddit.subscribers = -1
-    subreddit.title = None
     subreddit.type = type_
     subreddit.updated_at = timezone.now()
     subreddit.version = 2
@@ -316,8 +305,9 @@ def _update_queue(subreddit: Subreddit):
         Relation.objects.filter(source=subreddit.name)
         .exclude(
             target__in=(
-                Subreddit.objects
-                # .filter(updated_at__lte=datetime.utcnow() - timedelta(days=-5))
+                Subreddit.objects.filter(
+                    updated_at__gt=timezone.now() - timedelta(days=10)
+                )
                 .values("name")
                 .all()
             )
