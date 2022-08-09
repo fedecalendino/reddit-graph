@@ -59,13 +59,13 @@ class Subreddit(base.BaseModel):
 
     nsfw = models.BooleanField(
         blank=True,
-        default=False,
+        default=None,
         null=True,
     )
 
     quarantined = models.BooleanField(
         blank=True,
-        default=False,
+        default=None,
         null=True,
     )
 
