@@ -70,7 +70,9 @@ class Subreddit(base.BaseModel):
     )
 
     subscribers = models.IntegerField(
-        default=0,
+        blank=True,
+        default=None,
+        null=True,
     )
 
     title = models.TextField(

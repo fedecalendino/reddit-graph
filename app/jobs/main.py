@@ -134,10 +134,20 @@ def _process_non_public_subreddit(name: str, type_: SubredditType) -> Subreddit:
             name=name,
         )
 
+    subreddit.id = None
+    subreddit.color = None
+    subreddit.created_at = None
+    subreddit.description = None
+    subreddit.img_banner = None
+    subreddit.img_header = None
+    subreddit.img_icon = None
+    subreddit.nsfw = None
+    subreddit.quarantined = None
+    subreddit.subscribers = None
+    subreddit.title = None
     subreddit.type = type_
     subreddit.updated_at = timezone.now()
     subreddit.version = 3
-
     subreddit.save()
 
     return subreddit
