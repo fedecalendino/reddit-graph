@@ -18,6 +18,10 @@ class Queue(BaseModel):
         unique=True,
     )
 
+    priority = models.IntegerField(
+        default=0,
+    )
+
     # Methods
     def __str__(self):
         return f"{self.name}"

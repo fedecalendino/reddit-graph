@@ -22,7 +22,7 @@ def run():
 
     while True:
         number += 1
-        current = Queue.objects.first()
+        current = Queue.objects.order_by("-priority", "name").first()
 
         if current:
             logger.info("%d. fetching %s", number, current.name)
