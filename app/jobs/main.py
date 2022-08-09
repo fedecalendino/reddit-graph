@@ -34,7 +34,7 @@ def run():
             subreddit = fetch_subreddit_random(nsfw)
 
         if subreddit:
-            _update_queue(subreddit)
+            # _update_queue(subreddit)
             logger.info("%d. fetched %s", number, subreddit)
 
         if current:
@@ -119,7 +119,7 @@ def _process_public_subreddit(sub) -> Subreddit:
 
     subreddit.save()
 
-    fetch_relations(subreddit)
+    # fetch_relations(subreddit)
 
     return subreddit
 
