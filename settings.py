@@ -2,6 +2,11 @@ import os
 from pathlib import Path
 
 
+# App =========================================================================
+
+SUBREDDITS_ONLY = os.getenv("SUBREDDITS_ONLY", "false") == "true"
+
+
 # Applications ================================================================
 
 INSTALLED_APPS = ["app"]
@@ -77,3 +82,4 @@ USE_TZ = True
 print(f" * DEBUG = {DEBUG}")
 print(f" * LOG_LEVEL = {LOG_LEVEL}")
 print(f" * USERNAME = {REDDIT['USERNAME']}")
+print(f" * SUBREDDITS_ONLY = {SUBREDDITS_ONLY}")
