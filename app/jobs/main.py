@@ -8,7 +8,7 @@ from django.utils import timezone
 from prawcore.exceptions import Forbidden
 from prawcore.exceptions import NotFound, Redirect
 
-from app.constants import SUBREDDIT_REGEX, EXCLUDED
+from app.constants import EXCLUDED, DAYS_TO_UPDATE, SUBREDDIT_REGEX
 from app.models import Queue
 from app.models.relation import Relation, RelationType
 from app.models.subreddit import Subreddit, SubredditType
@@ -316,7 +316,7 @@ def _update_queue(subreddit: Subreddit):
         .exclude(
             target__in=(
                 Subreddit.objects.filter(
-                    updated_at__gt=timezone.now() - timedelta(days=14)
+                    updated_at__gt=timezone.now() - timedelta(days=DAYS_TO_UPDATE)
                 )
                 .values("name")
                 .all()
