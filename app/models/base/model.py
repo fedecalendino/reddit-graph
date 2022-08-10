@@ -7,15 +7,15 @@ class BaseModel(models.Model):
 
     # Fields
     created_at = models.DateTimeField(
-        auto_now_add=True,
         blank=True,
+        default=None,
         editable=False,
         null=True,
     )
 
     updated_at = models.DateTimeField(
-        auto_now=True,
         blank=True,
+        default=None,
         editable=False,
         null=True,
     )

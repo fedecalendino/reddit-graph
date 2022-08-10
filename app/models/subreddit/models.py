@@ -1,9 +1,11 @@
 import logging
+from typing import List
 
 from django.db import models
 
 from app.models import base
 from app.models import fields
+from app.models.relation import Relation, RelationType
 from .enums import SubredditType
 
 logger = logging.getLogger(__name__)
@@ -91,6 +93,25 @@ class Subreddit(base.BaseModel):
     )
 
     # Properties
+
+    def relations(self, type: RelationType = None) -> List[Relation]:
+        if not type:
+            return list(Relation.objects.filter(source=self.name).all())
+
+        return list(Relation.objects.filter(source=self.name, type=type).all())
+
+    @property
+    def sidebar_relations(self) -> List[Relation]:
+        return self.relations(RelationType.SIDEBAR)
+
+    @property
+    def topbar_relations(self) -> List[Relation]:
+        return self.relations(RelationType.TOPBAR)
+
+    @property
+    def wiki_relations(self) -> List[Relation]:
+        return self.relations(RelationType.WIKI)
+
     @property
     def url(self) -> str:
         return f"https://reddit.com/r/{self.name}"

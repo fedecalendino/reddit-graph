@@ -1,5 +1,5 @@
 import unittest
-from app.jobs import helpers
+from app import helpers
 
 
 class TestFindSubreddits(unittest.TestCase):

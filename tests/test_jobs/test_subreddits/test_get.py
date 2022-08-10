@@ -1,5 +1,5 @@
 import unittest
-from app.jobs import subreddits
+from app.actions import subreddits
 from app.models.subreddit import Subreddit, SubredditType
 
 
@@ -44,9 +44,6 @@ class TestSubredditsGet(unittest.TestCase):
         self.assertEqual(subreddit.name, "ravenclaw")
         self.assertIsNone(subreddit.color)
         self.assertEqual(subreddit.id, "2sjxt")
-        self.assertIsNone(subreddit.img_banner)
-        self.assertIsNone(subreddit.img_header)
-        self.assertIsNone(subreddit.img_icon)
         self.assertIsNone(subreddit.nsfw)
         self.assertIsNone(subreddit.quarantined)
         self.assertIsNone(subreddit.subscribers)
@@ -62,9 +59,6 @@ class TestSubredditsGet(unittest.TestCase):
         self.assertEqual(subreddit.name, "bitcoin_price")
         self.assertIsNone(subreddit.color)
         self.assertEqual(subreddit.id, "3771f")
-        self.assertIsNone(subreddit.img_banner)
-        self.assertIsNone(subreddit.img_header)
-        self.assertIsNone(subreddit.img_icon)
         self.assertIsNone(subreddit.nsfw)
         self.assertIsNone(subreddit.quarantined)
         self.assertIsNone(subreddit.subscribers)
