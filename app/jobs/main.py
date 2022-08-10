@@ -41,34 +41,6 @@ def run():
             current.delete()
 
 
-def fetch_subreddit(name: str) -> Subreddit:
-    if not is_valid_subreddit_name(name):
-        return None
-
-    name = name.lower()
-
-    try:
-        sub = reddit.subreddit(name)
-
-        try:
-            sub.quarantine
-        except Forbidden as exc:
-            sub.quaran.opt_in()
-
-        return _process_public_subreddit(sub)
-    except Forbidden as exc:
-        type_ = SubredditType.PRIVATE
-    except NotFound as exc:
-        type_ = SubredditType.BANNED
-    except Redirect as exc:
-        type_ = SubredditType.NON_EXISTENT
-    except Exception as exc:
-        logger.error(exc)
-        type_ = SubredditType.ERROR
-
-    return _process_non_public_subreddit(name, type_)
-
-
 def _process_public_subreddit(sub) -> Subreddit:
     try:
         subreddit = Subreddit.objects.get(
