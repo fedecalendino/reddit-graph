@@ -41,27 +41,6 @@ def run():
             current.delete()
 
 
-def fetch_subreddit_random(nsfw: bool = False) -> Subreddit:
-    logger.debug("fetching random subreddit (nsfw = %s)", nsfw)
-    return fetch_subreddit("random" if not nsfw else "randnsfw")
-
-
-def is_valid_subreddit_name(name: str, extra_exclusions: Set[str] = None) -> bool:
-    if len(name) > 25:
-        return False
-
-    if not re.findall(SUBREDDIT_REGEX, f"/r/{name.lower()}", flags=re.IGNORECASE):
-        return False
-
-    if name in EXCLUDED:
-        return False
-
-    if name in (extra_exclusions or set()):
-        return False
-
-    return True
-
-
 def fetch_subreddit(name: str) -> Subreddit:
     if not is_valid_subreddit_name(name):
         return None
