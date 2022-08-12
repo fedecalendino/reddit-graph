@@ -33,7 +33,7 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
         new_relations = []
         updated_relations = []
 
-        logger.debug("    * fetching %s related subreddits", relation_type)
+        logger.info("    * fetching %s related subreddits", relation_type)
 
         for related_subreddit in sorted(set(related_subreddits)):
             if not validate_subreddit_name(related_subreddit):
@@ -57,7 +57,7 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
                     str(exc),
                 )
 
-        logger.debug(
+        logger.info(
             "    * saving %s %s relations",
             relation_type,
             len(new_relations) + len(updated_relations),
@@ -68,7 +68,7 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
                 new_relations,
                 batch_size=250,
             )
-            logger.debug(
+            logger.info(
                 "    * created %s new %s relations",
                 len(new_relations),
                 relation_type,
@@ -80,7 +80,7 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
                 batch_size=250,
                 fields=["updated_at", "version"],
             )
-            logger.debug(
+            logger.info(
                 "    * updated %s %s relations",
                 len(updated_relations),
                 relation_type,
@@ -166,10 +166,10 @@ def _get_wiki_relations(praw_subreddit, limit: int = 250) -> Iterable[str]:
             wikipage = next(iterator)
 
             if wikipage.name.startswith("config"):
-                logger.debug("      > %s. %s (skipped)", index, wikipage.name)
+                logger.info("      > %s. %s (skipped)", index, wikipage.name)
                 continue
 
-            logger.debug("      > %s. %s", index, wikipage.name)
+            logger.info("      > %s. %s", index, wikipage.name)
 
             yield from filter(
                 lambda name: name
@@ -185,4 +185,4 @@ def _get_wiki_relations(praw_subreddit, limit: int = 250) -> Iterable[str]:
             errors = 0
         except Exception as exc:
             errors += 1
-            logger.debug("      > %s. %s (error)", index, str(exc))
+            logger.error("      > %s. %s (error)", index, str(exc))
