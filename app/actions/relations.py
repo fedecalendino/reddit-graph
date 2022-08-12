@@ -90,19 +90,19 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
 
 
 def _get_model(
-    subreddit: Subreddit, related_subreddit_name: str, relation_type: RelationType
+    praw_subreddit, related_subreddit_name: str, relation_type: RelationType
 ) -> Tuple[Relation, bool]:
     try:
         created = False
         relation = Relation.objects.get(
-            source=subreddit.name,
+            source=praw_subreddit.display_name.lower(),
             target=related_subreddit_name,
             type=relation_type,
         )
     except Relation.DoesNotExist:
         created = True
         relation = Relation(
-            source=subreddit.name,
+            source=praw_subreddit.display_name.lower(),
             target=related_subreddit_name,
             type=relation_type,
         )
