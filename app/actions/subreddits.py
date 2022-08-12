@@ -36,6 +36,7 @@ def get(name: str) -> Subreddit:
     if not subreddits:
         model, _ = _get_model(name)
         model.type = SubredditType.NON_EXISTENT
+        model.save()
         return model
 
     try:
@@ -44,6 +45,7 @@ def get(name: str) -> Subreddit:
         model, _ = _get_model(name)
         model.type = SubredditType.ERROR
         model.description = str(exc)
+        model.save()
         return model
 
 
