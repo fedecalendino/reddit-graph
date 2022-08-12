@@ -9,8 +9,4 @@ EXCLUDED = {
     "",
     "all",
     "new",
-    "reddit",
-    "subreddit",
-    "help",
-    "csshelp",
 }
