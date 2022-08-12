@@ -4,6 +4,7 @@ from app.models.base import BaseEnum
 class SubredditType(BaseEnum):
     ARCHIVED = "archived"
     BANNED = "banned"
+    DELETED = "deleted"
     GOLD_ONLY = "gold-only"
     PRIVATE = "private"
     PUBLIC = "public"
@@ -15,8 +16,6 @@ class SubredditType(BaseEnum):
 
 SUBREDDIT_TYPES = {
     "archived": SubredditType.ARCHIVED,
-    "banned": SubredditType.BANNED,
-    "error": SubredditType.ERROR,
     "gold_only": SubredditType.GOLD_ONLY,
     "private": SubredditType.PRIVATE,
     "public": SubredditType.PUBLIC,

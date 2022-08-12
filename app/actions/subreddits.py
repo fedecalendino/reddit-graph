@@ -94,6 +94,9 @@ def _process_data(praw_subreddit) -> Subreddit:
     if subreddit.type in [SubredditType.PUBLIC, SubredditType.RESTRICTED]:
         if subreddit.subscribers is None:
             subreddit.type = SubredditType.BANNED
+    elif subreddit.type == SubredditType.USER:
+        if subreddit.subscribers is None:
+            subreddit.type = SubredditType.DELETED
 
     subreddit.save()
 
