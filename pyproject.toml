@@ -10,7 +10,7 @@ authors = [
 ]
 
 packages = [
-    {include = "src"}
+    {include = "app"}
 ]
 
 [tool.poetry.dependencies]
@@ -22,12 +22,9 @@ pytz = "^2022.1"
 Flask = "^2.1.3"
 psycopg2-binary = "^2.9.3"
 
-[tool.poetry.group.dev.dependencies]
+[tool.poetry.dev-dependencies]
+ddt = "^1.6.0"
 black = "^22.6.0"
-coverage = "^6.4.2"
-ddt = "^1.5.0"
-
-
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
