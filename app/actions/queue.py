@@ -35,6 +35,6 @@ def update(subreddit: Subreddit):
     if not items:
         return
 
-    logger.info("    + queuing %s names", len(items))
+    logger.info("    * queuing %s names", len(items))
     Queue.objects.bulk_create(items, batch_size=250)
-    logger.info("    + queued %s names", len(items))
+    logger.info("      + queued %s names", len(items))

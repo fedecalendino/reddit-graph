@@ -69,7 +69,7 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
                 batch_size=250,
             )
             logger.info(
-                "    * created %s new %s relations",
+                "      + created %s new %s relations",
                 len(new_relations),
                 relation_type,
             )
@@ -81,7 +81,7 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
                 fields=["updated_at", "version"],
             )
             logger.info(
-                "    * updated %s %s relations",
+                "      + updated %s %s relations",
                 len(updated_relations),
                 relation_type,
             )
@@ -106,6 +106,7 @@ def _get_model(
             target=related_subreddit_name,
             type=relation_type,
         )
+        relation.created_at = timezone.now()
 
     relation.version = CURRENT_RELATION_VERSION
     relation.updated_at = timezone.now()
