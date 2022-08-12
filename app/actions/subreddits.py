@@ -91,7 +91,7 @@ def _process_data(praw_subreddit) -> Subreddit:
     subreddit.title = praw_subreddit.title
     subreddit.type = SUBREDDIT_TYPES.get(praw_subreddit.subreddit_type)
 
-    if subreddit.type == SubredditType.PUBLIC:
+    if subreddit.type in [SubredditType.PUBLIC, SubredditType.RESTRICTED]:
         if subreddit.subscribers is None:
             subreddit.type = SubredditType.BANNED
 

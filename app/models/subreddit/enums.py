@@ -7,6 +7,7 @@ class SubredditType(BaseEnum):
     GOLD_ONLY = "gold-only"
     PRIVATE = "private"
     PUBLIC = "public"
+    RESTRICTED = "restricted"
     USER = "user"
     NON_EXISTENT = "non-existent"
     ERROR = "error"
@@ -19,6 +20,6 @@ SUBREDDIT_TYPES = {
     "gold_only": SubredditType.GOLD_ONLY,
     "private": SubredditType.PRIVATE,
     "public": SubredditType.PUBLIC,
-    "restricted": SubredditType.BANNED,
+    "restricted": SubredditType.RESTRICTED,
     "user": SubredditType.USER,
 }
