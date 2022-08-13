@@ -123,12 +123,14 @@ def _get_model(
 
 
 def _get_sidebar_relations(praw_subreddit) -> Iterable[str]:
+    subreddit_name = praw_subreddit.display_name.lower()
+
     for widget in praw_subreddit.widgets.sidebar:
         if widget.kind != "community-list":
             continue
 
         yield from filter(
-            lambda name: name not in EXCLUDED | {praw_subreddit.display_name.lower()},
+            lambda name: name not in EXCLUDED | {subreddit_name},
             map(
                 lambda value: value.display_name.lower(),
                 widget.data,
@@ -137,6 +139,8 @@ def _get_sidebar_relations(praw_subreddit) -> Iterable[str]:
 
 
 def _get_topbar_relations(praw_subreddit) -> Iterable[str]:
+    subreddit_name = praw_subreddit.display_name.lower()
+
     for widget in praw_subreddit.widgets.topbar:
         if widget.kind != "menu":
             continue
@@ -151,8 +155,7 @@ def _get_topbar_relations(praw_subreddit) -> Iterable[str]:
 
         for item in items:
             yield from filter(
-                lambda name: name
-                not in EXCLUDED | {praw_subreddit.display_name.lower()},
+                lambda name: name not in EXCLUDED | {subreddit_name},
                 re.findall(
                     SUBREDDIT_REGEX,
                     str(item.url.lower()),
@@ -162,16 +165,18 @@ def _get_topbar_relations(praw_subreddit) -> Iterable[str]:
 
 
 def _get_wiki_relations(praw_subreddit, limit: int = 250) -> Iterable[str]:
+    subreddit_name = praw_subreddit.display_name.lower()
+
     index = 0
     errors = 0
 
     iterator = iter(praw_subreddit.wiki)
 
     while index < limit:
-        try:
-            if errors == 3:
-                break
+        if errors == 3:
+            break
 
+        try:
             wikipage = next(iterator)
 
             if wikipage.name.startswith("config"):
@@ -181,8 +186,7 @@ def _get_wiki_relations(praw_subreddit, limit: int = 250) -> Iterable[str]:
             logger.info("      > %s. %s", index, wikipage.name)
 
             yield from filter(
-                lambda name: name
-                not in EXCLUDED | {praw_subreddit.display_name.lower()},
+                lambda name: name not in EXCLUDED | {subreddit_name},
                 re.findall(
                     SUBREDDIT_REGEX,
                     str(wikipage.content_html).lower(),
@@ -194,4 +198,4 @@ def _get_wiki_relations(praw_subreddit, limit: int = 250) -> Iterable[str]:
             errors = 0
         except Exception as exc:
             errors += 1
-            logger.error("      > %s. %s (error)", index, str(exc))
+            logger.debug("      > %s. %s (error)", index, str(exc))
