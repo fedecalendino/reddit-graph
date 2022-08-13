@@ -5,6 +5,7 @@ from pathlib import Path
 # App =========================================================================
 
 SUBREDDITS_ONLY = os.getenv("SUBREDDITS_ONLY", "false") == "true"
+WIKI_PAGES_LIMIT = int(os.getenv("WIKI_PAGES_LIMIT", "200"))
 
 
 # Applications ================================================================
@@ -84,3 +85,5 @@ print(f" * DEBUG = {DEBUG}")
 print(f" * LOG_LEVEL = {LOG_LEVEL}")
 print(f" * USERNAME = {REDDIT['USERNAME']}")
 print(f" * SUBREDDITS_ONLY = {SUBREDDITS_ONLY}")
+print(f" * WIKI_PAGES_LIMIT = {WIKI_PAGES_LIMIT}")
+

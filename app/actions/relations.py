@@ -3,6 +3,7 @@ import re
 from typing import Dict, Iterable, Tuple
 
 from django.utils import timezone
+from django.conf import settings
 
 from app.constants import (
     EXCLUDED,
@@ -24,9 +25,16 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
     praw_subreddit = reddit.subreddit(subreddit.name)
 
     relations = {
-        RelationType.SIDEBAR: _get_sidebar_relations(praw_subreddit),
-        RelationType.TOPBAR: _get_topbar_relations(praw_subreddit),
-        RelationType.WIKI: _get_wiki_relations(praw_subreddit),
+        RelationType.SIDEBAR: _get_sidebar_relations(
+            praw_subreddit,
+        ),
+        RelationType.TOPBAR: _get_topbar_relations(
+            praw_subreddit,
+        ),
+        RelationType.WIKI: _get_wiki_relations(
+            praw_subreddit,
+            limit=settings.WIKI_PAGES_LIMIT,
+        ),
     }
 
     for relation_type, related_subreddits in relations.items():
