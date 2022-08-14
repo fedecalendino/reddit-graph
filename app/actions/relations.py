@@ -125,8 +125,10 @@ def _get_model(
 def _get_sidebar_relations(praw_subreddit) -> Iterable[str]:
     subreddit_name = praw_subreddit.display_name.lower()
 
-    for widget in praw_subreddit.widgets.sidebar:
-        if widget.kind != "community-list":
+    for widget_name in praw_subreddit.widgets.layout["sidebar"]["order"]:
+        widget = praw_subreddit.widgets.items.get(widget_name)
+
+        if not widget or widget.kind != "community-list":
             continue
 
         yield from filter(
@@ -141,7 +143,9 @@ def _get_sidebar_relations(praw_subreddit) -> Iterable[str]:
 def _get_topbar_relations(praw_subreddit) -> Iterable[str]:
     subreddit_name = praw_subreddit.display_name.lower()
 
-    for widget in praw_subreddit.widgets.topbar:
+    for widget_name in praw_subreddit.widgets.layout["topbar"]["order"]:
+        widget = praw_subreddit.widgets.items.get(widget_name)
+
         if widget.kind != "menu":
             continue
 
