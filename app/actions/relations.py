@@ -19,7 +19,12 @@ logger = logging.getLogger(__name__)
 
 
 def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
-    praw_subreddit = reddit.subreddit(subreddit.name)
+    praw_subreddits = list(reddit.info(subreddits=[subreddit.name.lower()]))
+
+    if not praw_subreddits:
+        return
+
+    praw_subreddit = praw_subreddits[0]
 
     relations = {
         RelationType.DESCRIPTION: _get_description_relations(
@@ -43,27 +48,30 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
 
         logger.info("    * fetching %s related subreddits", relation_type)
 
-        for related_subreddit in sorted(set(related_subreddits)):
-            if not validate_subreddit_name(related_subreddit):
-                continue
+        try:
+            for related_subreddit in sorted(set(related_subreddits)):
+                if not validate_subreddit_name(related_subreddit):
+                    continue
 
-            try:
-                relation, created = _get_model(
-                    praw_subreddit, related_subreddit, relation_type
-                )
+                try:
+                    relation, created = _get_model(
+                        praw_subreddit, related_subreddit, relation_type
+                    )
 
-                if created:
-                    new_relations.append(relation)
-                else:
-                    updated_relations.append(relation)
-            except Exception as exc:
-                logger.error(
-                    "      - error with %s > [%s] > %s: %s",
-                    subreddit.name,
-                    relation_type,
-                    related_subreddit,
-                    str(exc),
-                )
+                    if created:
+                        new_relations.append(relation)
+                    else:
+                        updated_relations.append(relation)
+                except Exception as exc:
+                    logger.error(
+                        "      - error with %s > [%s] > %s: %s",
+                        subreddit.name,
+                        relation_type,
+                        related_subreddit,
+                        str(exc),
+                    )
+        except Exception as exc:
+            logger.info("      - error fetching %s related subreddits: %s", relation_type, str(exc))
 
         logger.info(
             "    * saving %s %s relations",
@@ -123,9 +131,6 @@ def _get_model(
 
 
 def _get_description_relations(praw_subreddit) -> Iterable[str]:
-    if not praw_subreddit.public_description:
-        return
-
     subreddit_name = praw_subreddit.display_name.lower()
 
     yield from filter(
