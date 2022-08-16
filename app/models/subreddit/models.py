@@ -59,6 +59,10 @@ class Subreddit(base.BaseModel):
         null=True,
     )
 
+    new = models.BooleanField(
+        default=False,
+    )
+
     nsfw = models.BooleanField(
         blank=True,
         default=None,

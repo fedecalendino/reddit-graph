@@ -61,6 +61,7 @@ def _get_model(name: str) -> Tuple[Subreddit, bool]:
             name=name.lower(),
         )
 
+    subreddit.new = created
     subreddit.created_at = None
     subreddit.updated_at = timezone.now()
     subreddit.version = CURRENT_SUBREDDIT_VERSION

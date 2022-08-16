@@ -2,8 +2,8 @@ import logging
 import re
 from typing import Dict, Iterable, Tuple
 
-from django.utils import timezone
 from django.conf import settings
+from django.utils import timezone
 
 from app.constants import (
     EXCLUDED,
@@ -12,19 +12,19 @@ from app.constants import (
 )
 from app.helpers import validate_subreddit_name
 from app.models.relation import Relation, RelationType
-from app.models.subreddit import Subreddit, SubredditType
+from app.models.subreddit import Subreddit
 from app.reddit import reddit
 
 logger = logging.getLogger(__name__)
 
 
 def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
-    if subreddit.type != SubredditType.PUBLIC:
-        return {}
-
     praw_subreddit = reddit.subreddit(subreddit.name)
 
     relations = {
+        RelationType.DESCRIPTION: _get_description_relations(
+            praw_subreddit,
+        ),
         RelationType.SIDEBAR: _get_sidebar_relations(
             praw_subreddit,
         ),
@@ -120,6 +120,22 @@ def _get_model(
     relation.updated_at = timezone.now()
 
     return relation, created
+
+
+def _get_description_relations(praw_subreddit) -> Iterable[str]:
+    if not praw_subreddit.public_description:
+        return
+
+    subreddit_name = praw_subreddit.display_name.lower()
+
+    yield from filter(
+        lambda name: name not in EXCLUDED | {subreddit_name},
+        re.findall(
+            SUBREDDIT_REGEX,
+            str(praw_subreddit.public_description.lower()),
+            flags=re.IGNORECASE,
+        ),
+    )
 
 
 def _get_sidebar_relations(praw_subreddit) -> Iterable[str]:

@@ -1,4 +1,5 @@
 import unittest
+
 from app.actions import subreddits
 from app.models.subreddit import Subreddit, SubredditType
 
