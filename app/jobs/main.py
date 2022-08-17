@@ -1,6 +1,8 @@
 import logging
+import time
 
 from django.conf import settings
+from django.utils import timezone
 
 from app import actions
 from app.models.error import Error
@@ -26,8 +28,9 @@ def run():
                 logger.info("%d. fetching queued %s", counter, current.name)
                 subreddit: Subreddit = actions.get_subreddit(current.name)
             else:
+                name = "random" if counter % 10 else "randnsfw"
                 logger.info("%d. fetching random subreddit", counter)
-                subreddit: Subreddit = actions.get_random_subreddit(counter % 4 == 0)
+                subreddit: Subreddit = actions.get_random_subreddit(counter % 10 == 0)
                 subreddits_only = False
 
             if subreddit:
@@ -42,4 +45,10 @@ def run():
                 current.delete()
         except Exception as exc:
             logger.error(exc)
-            Error(name=name, description=exc).save()
+            Error(
+                created_at=timezone.now(),
+                updated_at=timezone.now(),
+                name=name,
+                description=exc
+            ).save()
+            time.sleep(60)
