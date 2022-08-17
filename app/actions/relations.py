@@ -71,7 +71,11 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
                         str(exc),
                     )
         except Exception as exc:
-            logger.info("      - error fetching %s related subreddits: %s", relation_type, str(exc))
+            logger.info(
+                "      - error fetching %s related subreddits: %s",
+                relation_type,
+                str(exc),
+            )
 
         logger.info(
             "    * saving %s %s relations",
