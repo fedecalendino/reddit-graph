@@ -30,7 +30,14 @@ def update(subreddit: Subreddit):
     items = []
 
     for target in targets:
-        items.append(Queue(name=target))
+        items.append(
+            Queue(
+                created_at=timezone.now(),
+                updated_at=timezone.now(),
+                name=target,
+                priority=-1,
+            )
+        )
 
     if not items:
         return
