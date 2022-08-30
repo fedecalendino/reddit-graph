@@ -16,6 +16,11 @@ def run():
     counter = 0
     subreddits_only = settings.SUBREDDITS_ONLY
 
+    current = Queue.objects.order_by("-priority", "name").first()
+
+    if not current:
+        actions.fill_queue()
+
     while True:
         name = None
 
@@ -49,6 +54,6 @@ def run():
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
                 name=name,
-                description=exc
+                description=exc,
             ).save()
             time.sleep(60)

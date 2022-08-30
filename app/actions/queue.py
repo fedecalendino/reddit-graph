@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from app.constants import DAYS_TO_UPDATE
 from app.models import Queue, Relation, Subreddit
+from app.reddit import reddit
 
 logger = logging.getLogger(__name__)
 
@@ -45,3 +46,23 @@ def update(subreddit: Subreddit):
     logger.info("    * queuing %s names", len(items))
     Queue.objects.bulk_create(items, batch_size=250)
     logger.info("      + queued %s names", len(items))
+
+
+def fill():
+    items = []
+
+    logger.info("fetching popular subreddits")
+
+    for sub in reddit.subreddits.popular(limit=1000):
+        items.append(
+            Queue(
+                created_at=timezone.now(),
+                updated_at=timezone.now(),
+                name=sub.display_name.lower(),
+                priority=-100,
+            )
+        )
+
+    logger.info("  * queuing %s names", len(items))
+    Queue.objects.bulk_create(items, batch_size=250)
+    logger.info("    + queued %s names", len(items))
