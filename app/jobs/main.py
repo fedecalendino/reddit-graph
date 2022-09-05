@@ -19,12 +19,15 @@ def run():
     current = Queue.objects.order_by("-priority", "name").first()
 
     if not current:
-        actions.fill_queue()
+        actions.fill_queue_with_popular_subreddits()
 
     while True:
         name = None
 
         try:
+            if counter % 500 == 0:
+                actions.fill_queue_with_outdated_subreddits()
+
             current = Queue.objects.order_by("-priority", "name").first()
             counter += 1
 
@@ -44,16 +47,18 @@ def run():
 
                 if not subreddits_only:
                     actions.get_relations(subreddit)
-                    actions.update_queue(subreddit)
+                    actions.fill_queue_with_related_subreddits(subreddit)
 
             if current:
                 current.delete()
         except Exception as exc:
             logger.error(exc)
+
             Error(
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
                 name=name,
                 description=exc,
             ).save()
+
             time.sleep(60)
