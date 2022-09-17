@@ -3,7 +3,7 @@
 from django.db import migrations, models
 
 import app.models.fields.enum
-import app.models.relation.enums
+import app.models.link.enums
 
 
 class Migration(migrations.Migration):
@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
             model_name="relation",
             name="type",
             field=app.models.fields.enum.EnumField(
-                app.models.relation.enums.RelationType, default=None, max_length=11
+                app.models.link.enums.LinkType, default=None, max_length=11
             ),
         ),
     ]

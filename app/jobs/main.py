@@ -46,8 +46,8 @@ def run():
                 logger.info("%d. >>> saved: %s", counter, subreddit)
 
                 if not subreddits_only:
-                    actions.get_relations(subreddit)
-                    actions.fill_queue_with_related_subreddits(subreddit)
+                    actions.get_links(subreddit)
+                    actions.fill_queue_with_linked_subreddits(subreddit)
 
             if current:
                 current.delete()

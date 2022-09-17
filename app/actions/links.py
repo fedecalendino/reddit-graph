@@ -8,17 +8,17 @@ from django.utils import timezone
 from app.constants import (
     EXCLUDED,
     SUBREDDIT_REGEX,
-    CURRENT_RELATION_VERSION,
+    CURRENT_LINK_VERSION,
 )
 from app.helpers import validate_subreddit_name
-from app.models.relation import Relation, RelationType
+from app.models.link import Link, LinkType
 from app.models.subreddit import Subreddit
 from app.reddit import reddit
 
 logger = logging.getLogger(__name__)
 
 
-def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
+def get(subreddit: Subreddit) -> Dict[LinkType, Link]:
     praw_subreddits = list(reddit.info(subreddits=[subreddit.name.lower()]))
 
     if not praw_subreddits:
@@ -26,115 +26,115 @@ def get(subreddit: Subreddit) -> Dict[RelationType, Relation]:
 
     praw_subreddit = praw_subreddits[0]
 
-    relations = {
-        RelationType.DESCRIPTION: _get_description_relations(
+    links = {
+        LinkType.DESCRIPTION: _get_description_links(
             praw_subreddit,
         ),
-        RelationType.SIDEBAR: _get_sidebar_relations(
+        LinkType.SIDEBAR: _get_sidebar_links(
             praw_subreddit,
         ),
-        RelationType.TOPBAR: _get_topbar_relations(
+        LinkType.TOPBAR: _get_topbar_links(
             praw_subreddit,
         ),
-        RelationType.WIKI: _get_wiki_relations(
+        LinkType.WIKI: _get_wiki_links(
             praw_subreddit,
             limit=settings.WIKI_PAGES_LIMIT,
         ),
     }
 
-    for relation_type, related_subreddits in relations.items():
-        new_relations = []
-        updated_relations = []
+    for link_type, linked_subreddits in links.items():
+        new_links = []
+        updated_links = []
 
-        logger.info("    * fetching %s related subreddits", relation_type)
+        logger.info("    * fetching %s linked subreddits", link_type)
 
         try:
-            for related_subreddit in sorted(set(related_subreddits)):
-                if not validate_subreddit_name(related_subreddit):
+            for linked_subreddit in sorted(set(linked_subreddits)):
+                if not validate_subreddit_name(linked_subreddit):
                     continue
 
                 try:
-                    relation, created = _get_model(
-                        praw_subreddit, related_subreddit, relation_type
+                    link, created = _get_model(
+                        praw_subreddit, linked_subreddit, link_type
                     )
 
                     if created:
-                        new_relations.append(relation)
+                        new_links.append(link)
                     else:
-                        updated_relations.append(relation)
+                        updated_links.append(link)
                 except Exception as exc:
                     logger.error(
                         "      - error with %s > [%s] > %s: %s",
                         subreddit.name,
-                        relation_type,
-                        related_subreddit,
+                        link_type,
+                        linked_subreddit,
                         str(exc),
                     )
         except Exception as exc:
             logger.info(
-                "      - error fetching %s related subreddits: %s",
-                relation_type,
+                "      - error fetching %s linked subreddits: %s",
+                link_type,
                 str(exc),
             )
 
         logger.info(
-            "    * saving %s %s relations",
-            relation_type,
-            len(new_relations) + len(updated_relations),
+            "    * saving %s %s links",
+            link_type,
+            len(new_links) + len(updated_links),
         )
 
-        if new_relations:
-            Relation.objects.bulk_create(
-                new_relations,
+        if new_links:
+            Link.objects.bulk_create(
+                new_links,
                 batch_size=250,
             )
             logger.info(
-                "      + created %s new %s relations",
-                len(new_relations),
-                relation_type,
+                "      + created %s new %s links",
+                len(new_links),
+                link_type,
             )
 
-        if updated_relations:
-            Relation.objects.bulk_update(
-                updated_relations,
+        if updated_links:
+            Link.objects.bulk_update(
+                updated_links,
                 batch_size=250,
                 fields=["updated_at", "version"],
             )
             logger.info(
-                "      + updated %s %s relations",
-                len(updated_relations),
-                relation_type,
+                "      + updated %s %s links",
+                len(updated_links),
+                link_type,
             )
 
-    return relations
+    return links
 
 
 def _get_model(
-    praw_subreddit, related_subreddit_name: str, relation_type: RelationType
-) -> Tuple[Relation, bool]:
+    praw_subreddit, linked_subreddit_name: str, link_type: LinkType
+) -> Tuple[Link, bool]:
     try:
         created = False
-        relation = Relation.objects.get(
+        link = Link.objects.get(
             source=praw_subreddit.display_name.lower(),
-            target=related_subreddit_name,
-            type=relation_type,
+            target=linked_subreddit_name,
+            type=link_type,
         )
-    except Relation.DoesNotExist:
+    except Link.DoesNotExist:
         created = True
-        relation = Relation(
+        link = Link(
             source=praw_subreddit.display_name.lower(),
-            target=related_subreddit_name,
-            type=relation_type,
+            target=linked_subreddit_name,
+            type=link_type,
         )
-        relation.created_at = timezone.now()
+        link.created_at = timezone.now()
 
-    relation.version = CURRENT_RELATION_VERSION
-    relation.updated_at = timezone.now()
+    link.version = CURRENT_LINK_VERSION
+    link.updated_at = timezone.now()
 
-    return relation, created
+    return link, created
 
 
-def _get_description_relations(praw_subreddit) -> Iterable[str]:
+def _get_description_links(praw_subreddit) -> Iterable[str]:
     subreddit_name = praw_subreddit.display_name.lower()
 
     yield from filter(
@@ -147,8 +147,24 @@ def _get_description_relations(praw_subreddit) -> Iterable[str]:
     )
 
 
-def _get_sidebar_relations(praw_subreddit) -> Iterable[str]:
+def _get_sidebar_links(praw_subreddit) -> Iterable[str]:
     subreddit_name = praw_subreddit.display_name.lower()
+
+    items = set()
+
+    try:
+        # check config/sidebar wiki page for old subreddits that didn't add related links
+        sidebar_wiki = praw_subreddit.wiki["config/sidebar"]
+
+        items.update(
+            re.findall(
+                SUBREDDIT_REGEX,
+                str(sidebar_wiki.content_html.lower()),
+                flags=re.IGNORECASE,
+            )
+        )
+    except:
+        pass
 
     for widget_name in praw_subreddit.widgets.layout["sidebar"]["order"]:
         widget = praw_subreddit.widgets.items.get(widget_name)
@@ -156,16 +172,20 @@ def _get_sidebar_relations(praw_subreddit) -> Iterable[str]:
         if not widget or widget.kind != "community-list":
             continue
 
-        yield from filter(
-            lambda name: name not in EXCLUDED | {subreddit_name},
+        items.update(
             map(
                 lambda value: value.display_name.lower(),
                 widget.data,
-            ),
+            )
         )
 
+    yield from filter(
+        lambda name: name not in EXCLUDED | {subreddit_name},
+        items,
+    )
 
-def _get_topbar_relations(praw_subreddit) -> Iterable[str]:
+
+def _get_topbar_links(praw_subreddit) -> Iterable[str]:
     subreddit_name = praw_subreddit.display_name.lower()
 
     for widget_name in praw_subreddit.widgets.layout["topbar"]["order"]:
@@ -193,7 +213,7 @@ def _get_topbar_relations(praw_subreddit) -> Iterable[str]:
             )
 
 
-def _get_wiki_relations(praw_subreddit, limit: int = 250) -> Iterable[str]:
+def _get_wiki_links(praw_subreddit, limit: int = 250) -> Iterable[str]:
     subreddit_name = praw_subreddit.display_name.lower()
 
     index = 0

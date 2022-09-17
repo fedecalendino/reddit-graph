@@ -84,7 +84,7 @@ class Migration(migrations.Migration):
                 (
                     "type",
                     app.models.fields.enum.EnumField(
-                        app.models.relation.enums.RelationType,
+                        app.models.link.enums.LinkType,
                         default=None,
                         max_length=7,
                     ),

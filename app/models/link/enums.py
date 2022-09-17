@@ -1,7 +1,7 @@
 from app.models.base import BaseEnum
 
 
-class RelationType(BaseEnum):
+class LinkType(BaseEnum):
     DESCRIPTION = "description"
     SIDEBAR = "sidebar"
     TOPBAR = "topbar"

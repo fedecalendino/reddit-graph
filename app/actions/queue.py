@@ -4,15 +4,15 @@ from datetime import timedelta
 from django.utils import timezone
 
 from app.constants import DAYS_TO_UPDATE
-from app.models import Queue, Relation, Subreddit
+from app.models import Queue, Link, Subreddit
 from app.reddit import reddit
 
 logger = logging.getLogger(__name__)
 
 
-def fill_with_related_subreddits(subreddit: Subreddit):
+def fill_with_linked_subreddits(subreddit: Subreddit):
     targets = set(
-        Relation.objects.filter(source=subreddit.name)
+        Link.objects.filter(source=subreddit.name)
         .exclude(
             target__in=(
                 Subreddit.objects.filter(

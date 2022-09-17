@@ -5,14 +5,14 @@ from django.db import models
 
 from app.models import fields
 from app.models.base import BaseModel
-from .enums import RelationType
+from .enums import LinkType
 
 logger = logging.getLogger(__name__)
 
 
-class Relation(BaseModel):
+class Link(BaseModel):
     class Meta:
-        db_table = "relations"
+        db_table = "links"
         constraints = [
             models.UniqueConstraint(
                 name="id",
@@ -35,8 +35,8 @@ class Relation(BaseModel):
     )
 
     type = fields.EnumField(
-        RelationType,
-        max_length=RelationType.max_length(),
+        LinkType,
+        max_length=LinkType.max_length(),
     )
 
     version = models.IntegerField(

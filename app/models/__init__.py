@@ -1,11 +1,11 @@
 from .error import Error
 from .queue import Queue
-from .relation import Relation
+from .link import Link
 from .subreddit import Subreddit
 
 __all__ = [
     "Error",
     "Queue",
-    "Relation",
+    "Link",
     "Subreddit",
 ]
