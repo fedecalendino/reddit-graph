@@ -5,11 +5,8 @@ from typing import Dict, Iterable, Tuple
 from django.conf import settings
 from django.utils import timezone
 
-from app.constants import (
-    EXCLUDED,
-    SUBREDDIT_REGEX,
-    CURRENT_LINK_VERSION,
-)
+from app.constants import CURRENT_LINK_VERSION, EXCLUDED
+from app import helpers
 from app.helpers import validate_subreddit_name
 from app.models.link import Link, LinkType
 from app.models.subreddit import Subreddit
@@ -26,20 +23,13 @@ def get(subreddit: Subreddit) -> Dict[LinkType, Link]:
 
     praw_subreddit = praw_subreddits[0]
 
+    excluded = EXCLUDED | {praw_subreddit.display_name.lower()}
+
     links = {
-        LinkType.DESCRIPTION: _get_description_links(
-            praw_subreddit,
-        ),
-        LinkType.SIDEBAR: _get_sidebar_links(
-            praw_subreddit,
-        ),
-        LinkType.TOPBAR: _get_topbar_links(
-            praw_subreddit,
-        ),
-        LinkType.WIKI: _get_wiki_links(
-            praw_subreddit,
-            limit=settings.WIKI_PAGES_LIMIT,
-        ),
+        LinkType.DESCRIPTION: _get_description_links(praw_subreddit),
+        LinkType.SIDEBAR: _get_sidebar_links(praw_subreddit),
+        LinkType.TOPBAR: _get_topbar_links(praw_subreddit),
+        LinkType.WIKI: _get_wiki_links(praw_subreddit, limit=settings.WIKI_PAGES_LIMIT),
     }
 
     for link_type, linked_subreddits in links.items():
@@ -49,13 +39,19 @@ def get(subreddit: Subreddit) -> Dict[LinkType, Link]:
         logger.info("    * fetching %s linked subreddits", link_type)
 
         try:
-            for linked_subreddit in sorted(set(linked_subreddits)):
-                if not validate_subreddit_name(linked_subreddit):
-                    continue
+            filtered_linked_subreddits = sorted(
+                filter(
+                    lambda name: name not in excluded and validate_subreddit_name(name),
+                    set(linked_subreddits),
+                )
+            )
 
+            for linked_subreddit_name in filtered_linked_subreddits:
                 try:
                     link, created = _get_model(
-                        praw_subreddit, linked_subreddit, link_type
+                        praw_subreddit=praw_subreddit,
+                        linked_subreddit_name=linked_subreddit_name,
+                        link_type=link_type,
                     )
 
                     if created:
@@ -67,7 +63,7 @@ def get(subreddit: Subreddit) -> Dict[LinkType, Link]:
                         "      - error with %s > [%s] > %s: %s",
                         subreddit.name,
                         link_type,
-                        linked_subreddit,
+                        linked_subreddit_name,
                         str(exc),
                     )
         except Exception as exc:
@@ -77,40 +73,46 @@ def get(subreddit: Subreddit) -> Dict[LinkType, Link]:
                 str(exc),
             )
 
-        logger.info(
-            "    * saving %s %s links",
-            link_type,
-            len(new_links) + len(updated_links),
-        )
-
-        if new_links:
-            Link.objects.bulk_create(
-                new_links,
-                batch_size=250,
-            )
-            logger.info(
-                "      + created %s new %s links",
-                len(new_links),
-                link_type,
-            )
-
-        if updated_links:
-            Link.objects.bulk_update(
-                updated_links,
-                batch_size=250,
-                fields=["updated_at", "version"],
-            )
-            logger.info(
-                "      + updated %s %s links",
-                len(updated_links),
-                link_type,
-            )
+        _save_links(new_links, updated_links, link_type)
 
     return links
 
 
+def _save_links(new_links, updated_links, link_type: LinkType):
+    logger.info(
+        "    * saving %s %s links",
+        link_type,
+        len(new_links) + len(updated_links),
+    )
+
+    if new_links:
+        Link.objects.bulk_create(
+            new_links,
+            batch_size=250,
+        )
+        logger.info(
+            "      + created %s new %s links",
+            len(new_links),
+            link_type,
+        )
+
+    if updated_links:
+        Link.objects.bulk_update(
+            updated_links,
+            batch_size=250,
+            fields=["updated_at", "version"],
+        )
+        logger.info(
+            "      + updated %s %s links",
+            len(updated_links),
+            link_type,
+        )
+
+
 def _get_model(
-    praw_subreddit, linked_subreddit_name: str, link_type: LinkType
+    praw_subreddit,
+    linked_subreddit_name: str,
+    link_type: LinkType,
 ) -> Tuple[Link, bool]:
     try:
         created = False
@@ -135,59 +137,35 @@ def _get_model(
 
 
 def _get_description_links(praw_subreddit) -> Iterable[str]:
-    subreddit_name = praw_subreddit.display_name.lower()
-
-    yield from filter(
-        lambda name: name not in EXCLUDED | {subreddit_name},
-        re.findall(
-            SUBREDDIT_REGEX,
-            str(praw_subreddit.public_description.lower()),
-            flags=re.IGNORECASE,
-        ),
+    yield from helpers.find_links(
+        text=praw_subreddit.public_description,
     )
 
 
 def _get_sidebar_links(praw_subreddit) -> Iterable[str]:
-    subreddit_name = praw_subreddit.display_name.lower()
-
-    items = set()
-
     try:
-        # check config/sidebar wiki page for old subreddits that didn't add related links
+        # check config/sidebar for old subreddits that didn't add related subreddits
         sidebar_wiki = praw_subreddit.wiki["config/sidebar"]
-
-        items.update(
-            re.findall(
-                SUBREDDIT_REGEX,
-                str(sidebar_wiki.content_html.lower()),
-                flags=re.IGNORECASE,
-            )
+        yield from helpers.find_links(
+            text=sidebar_wiki.content_html,
         )
     except:
         pass
 
+    # check sidebar widgets for related subreddits.
     for widget_name in praw_subreddit.widgets.layout["sidebar"]["order"]:
         widget = praw_subreddit.widgets.items.get(widget_name)
 
         if not widget or widget.kind != "community-list":
             continue
 
-        items.update(
-            map(
-                lambda value: value.display_name.lower(),
-                widget.data,
-            )
+        yield from map(
+            lambda value: value.display_name.lower(),
+            widget.data,
         )
-
-    yield from filter(
-        lambda name: name not in EXCLUDED | {subreddit_name},
-        items,
-    )
 
 
 def _get_topbar_links(praw_subreddit) -> Iterable[str]:
-    subreddit_name = praw_subreddit.display_name.lower()
-
     for widget_name in praw_subreddit.widgets.layout["topbar"]["order"]:
         widget = praw_subreddit.widgets.items.get(widget_name)
 
@@ -203,19 +181,12 @@ def _get_topbar_links(praw_subreddit) -> Iterable[str]:
                 items.append(data)
 
         for item in items:
-            yield from filter(
-                lambda name: name not in EXCLUDED | {subreddit_name},
-                re.findall(
-                    SUBREDDIT_REGEX,
-                    str(item.url.lower()),
-                    flags=re.IGNORECASE,
-                ),
+            yield from helpers.find_links(
+                text=item.url,
             )
 
 
 def _get_wiki_links(praw_subreddit, limit: int = 250) -> Iterable[str]:
-    subreddit_name = praw_subreddit.display_name.lower()
-
     index = 0
     errors = 0
 
@@ -234,13 +205,8 @@ def _get_wiki_links(praw_subreddit, limit: int = 250) -> Iterable[str]:
 
             logger.info("      > %s. %s", index, wikipage.name)
 
-            yield from filter(
-                lambda name: name not in EXCLUDED | {subreddit_name},
-                re.findall(
-                    SUBREDDIT_REGEX,
-                    str(wikipage.content_html).lower(),
-                    flags=re.IGNORECASE,
-                ),
+            yield from helpers.find_links(
+                text=wikipage.content_html,
             )
 
             index += 1
