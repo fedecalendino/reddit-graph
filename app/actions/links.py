@@ -156,13 +156,19 @@ def _get_sidebar_links(praw_subreddit) -> Iterable[str]:
     for widget_name in praw_subreddit.widgets.layout["sidebar"]["order"]:
         widget = praw_subreddit.widgets.items.get(widget_name)
 
-        if not widget or widget.kind != "community-list":
+        if not widget:
             continue
 
-        yield from map(
-            lambda value: value.display_name.lower(),
-            widget.data,
-        )
+        if widget.kind == 'textarea':
+            yield from helpers.find_links(
+                text=widget.text,
+            )
+
+        if widget.kind == "community-list":
+            yield from map(
+                lambda value: value.display_name.lower(),
+                widget.data,
+            )
 
 
 def _get_topbar_links(praw_subreddit) -> Iterable[str]:
