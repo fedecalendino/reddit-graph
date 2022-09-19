@@ -36,7 +36,7 @@ def fill_with_linked_subreddits(subreddit: Subreddit):
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
                 name=target,
-                priority=-1,
+                priority=subreddit.subscribers,
             )
         )
 
@@ -59,7 +59,7 @@ def fill_with_popular_subreddits():
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
                 name=sub.display_name.lower(),
-                priority=-100,
+                priority=-sub.subscribers,
             )
         )
 
@@ -85,7 +85,7 @@ def fill_with_outdated_subreddits():
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
                 name=subreddit.name.lower(),
-                priority=-50,
+                priority=subreddit.subscribers if subreddit.subscribers else 0,
             )
         )
 
