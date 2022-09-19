@@ -32,11 +32,13 @@ def get(subreddit: Subreddit) -> Dict[LinkType, Link]:
         LinkType.WIKI: _get_wiki_links(praw_subreddit, limit=settings.WIKI_PAGES_LIMIT),
     }
 
+    logger.info("    * fetching linked subreddits")
+
     for link_type, linked_subreddits in links.items():
         new_links = []
         updated_links = []
 
-        logger.info("    * fetching %s linked subreddits", link_type)
+        # logger.info("    * fetching %s linked subreddits", link_type)
 
         try:
             filtered_linked_subreddits = sorted(
@@ -59,19 +61,22 @@ def get(subreddit: Subreddit) -> Dict[LinkType, Link]:
                     else:
                         updated_links.append(link)
                 except Exception as exc:
-                    logger.error(
-                        "      - error with %s > [%s] > %s: %s",
-                        subreddit.name,
-                        link_type,
-                        linked_subreddit_name,
-                        str(exc),
-                    )
+                    pass
+                    # logger.error(
+                    #     "      - error with %s > [%s] > %s: %s",
+                    #     subreddit.name,
+                    #     link_type,
+                    #     linked_subreddit_name,
+                    #     str(exc),
+                    # )
+
         except Exception as exc:
-            logger.info(
-                "      - error fetching %s linked subreddits: %s",
-                link_type,
-                str(exc),
-            )
+            pass
+            # logger.info(
+            #     "      - error fetching %s linked subreddits: %s",
+            #     link_type,
+            #     str(exc),
+            # )
 
         _save_links(new_links, updated_links, link_type)
 
@@ -79,11 +84,11 @@ def get(subreddit: Subreddit) -> Dict[LinkType, Link]:
 
 
 def _save_links(new_links, updated_links, link_type: LinkType):
-    logger.info(
-        "    * saving %s %s links",
-        link_type,
-        len(new_links) + len(updated_links),
-    )
+    # logger.info(
+    #     "    * saving %s %s links",
+    #     link_type,
+    #     len(new_links) + len(updated_links),
+    # )
 
     if new_links:
         Link.objects.bulk_create(
@@ -206,10 +211,10 @@ def _get_wiki_links(praw_subreddit, limit: int = 250) -> Iterable[str]:
             wikipage = next(iterator)
 
             if wikipage.name.startswith("config"):
-                logger.info("      > %s. %s (skipped)", index, wikipage.name)
+                # logger.info("      > %s. %s (skipped)", index, wikipage.name)
                 continue
 
-            logger.info("      > %s. %s", index, wikipage.name)
+            # logger.info("      > %s. %s", index, wikipage.name)
 
             yield from helpers.find_links(
                 text=wikipage.content_html,
@@ -219,4 +224,4 @@ def _get_wiki_links(praw_subreddit, limit: int = 250) -> Iterable[str]:
             errors = 0
         except Exception as exc:
             errors += 1
-            logger.debug("      > %s. %s (error)", index, str(exc))
+            # logger.debug("      > %s. %s (error)", index, str(exc))

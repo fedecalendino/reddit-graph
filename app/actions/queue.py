@@ -54,6 +54,9 @@ def fill_with_popular_subreddits():
     items = []
 
     for sub in reddit.subreddits.popular(limit=1000):
+        if sub.subscribers > 1_000_000:
+            continue
+        
         items.append(
             Queue(
                 created_at=timezone.now(),
