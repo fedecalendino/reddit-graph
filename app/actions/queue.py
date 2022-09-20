@@ -3,8 +3,10 @@ from datetime import timedelta
 
 from django.utils import timezone
 
-from app.constants import DAYS_TO_UPDATE
-from app.models import Queue, Link, Subreddit
+from app.constants import DAYS_TO_UPDATE, CURRENT_SUBREDDIT_VERSION
+from app.models.queue import Queue
+from app.models.link import Link
+from app.models.subreddit import Subreddit, SubredditType
 from app.reddit import reddit
 
 logger = logging.getLogger(__name__)
@@ -80,9 +82,19 @@ def fill_with_outdated_subreddits():
         name__in=Queue.objects.values("name").all(),
     )
 
+    excluded_types = [
+        SubredditType.BANNED, 
+        SubredditType.NON_EXISTENT,
+        SubredditType.DELETED,
+    ]
+
     items = []
 
     for subreddit in queryset.all():
+        if subreddit.type in excluded_types:
+            if subreddit.version == CURRENT_SUBREDDIT_VERSION:
+                continue
+
         items.append(
             Queue(
                 created_at=timezone.now(),
