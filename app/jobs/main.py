@@ -33,11 +33,11 @@ def run():
 
             if current:
                 name = current.name
-                logger.info("%d. fetching queued %s", counter, current.name)
+                logger.info("%d. fetching: /r/%s (p = %s)", counter, current.name, current.priority)
                 subreddit: Subreddit = actions.get_subreddit(current.name)
             else:
                 name = "random" if counter % 10 else "randnsfw"
-                logger.info("%d. fetching random subreddit", counter)
+                logger.info("%d. fetching: %s subreddit", counter, name)
                 subreddit: Subreddit = actions.get_random_subreddit(counter % 10 == 0)
                 subreddits_only = False
 
