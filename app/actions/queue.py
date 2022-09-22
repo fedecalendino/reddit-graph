@@ -38,7 +38,7 @@ def fill_with_linked_subreddits(subreddit: Subreddit):
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
                 name=target,
-                priority=subreddit.subscribers if subreddit.subscribers else 0,
+                priority=100_000_000 + (subreddit.subscribers if subreddit.subscribers else 0),
             )
         )
 
