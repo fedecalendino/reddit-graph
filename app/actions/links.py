@@ -164,7 +164,7 @@ def _get_sidebar_links(praw_subreddit) -> Iterable[str]:
         if not widget:
             continue
 
-        if widget.kind == 'textarea':
+        if widget.kind == "textarea":
             yield from helpers.find_links(
                 text=widget.text,
             )

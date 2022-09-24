@@ -38,7 +38,8 @@ def fill_with_linked_subreddits(subreddit: Subreddit):
                 created_at=timezone.now(),
                 updated_at=timezone.now(),
                 name=target,
-                priority=100_000_000 + (subreddit.subscribers if subreddit.subscribers else 0),
+                priority=100_000_000
+                + (subreddit.subscribers if subreddit.subscribers else 0),
             )
         )
 
@@ -58,7 +59,7 @@ def fill_with_popular_subreddits():
     for sub in reddit.subreddits.popular(limit=1000):
         if sub.subscribers > 1_000_000:
             continue
-        
+
         items.append(
             Queue(
                 created_at=timezone.now(),
@@ -83,7 +84,7 @@ def fill_with_outdated_subreddits():
     )
 
     excluded_types = [
-        SubredditType.BANNED, 
+        SubredditType.BANNED,
         SubredditType.NON_EXISTENT,
         SubredditType.DELETED,
     ]

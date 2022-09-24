@@ -20,6 +20,7 @@ praw = "^7.6.0"
 requests = "^2.28.1"
 pytz = "^2022.1"
 psycopg2-binary = "^2.9.3"
+Flask = "^2.2.2"
 
 [tool.poetry.dev-dependencies]
 ddt = "^1.6.0"

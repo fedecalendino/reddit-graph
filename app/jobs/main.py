@@ -33,7 +33,12 @@ def run():
 
             if current:
                 name = current.name
-                logger.info("%d. fetching: /r/%s (p = %s)", counter, current.name, current.priority)
+                logger.info(
+                    "%d. fetching: /r/%s (p = %s)",
+                    counter,
+                    current.name,
+                    current.priority,
+                )
                 subreddit: Subreddit = actions.get_subreddit(current.name)
             else:
                 name = "random" if counter % 10 else "randnsfw"
