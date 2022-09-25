@@ -29,6 +29,8 @@ function dump() {
 }
 
 
+cd "/app/release"
+
 echo "Cleaning workspace..."
 rm -rf $WORKSPACE
 
@@ -42,7 +44,7 @@ dump "links_by_type"
 dump "links"
 
 echo " * generating readme file"
-python3 ./make_readme.py "$VERSION" "$WORKSPACE"
+python3 ./readme.py "$VERSION" "$WORKSPACE"
 echo ""
 
 cd $WORKSPACE
@@ -55,7 +57,7 @@ git push origin main
 echo ""
 
 echo " * making release on github..."
-curl -X POST  -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_ACCESS_TOKEN" --data "{\"tag_name\": \"$VERSION\", \"target_commitish\": \"main\", \"name\": \"$VERSION\", \"body\": \"Release $VERSION\", \"draft\": false, \"prerelease\": false, \"generate_release_notes\": false }" "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPOSITORY/releases"  
+curl -X POST  -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GITHUB_ACCESS_TOKEN" --data "{\"tag_name\": \"$VERSION\", \"target_commitish\": \"main\", \"name\": \"$VERSION\", \"body\": \"Release $VERSION\", \"draft\": false, \"prerelease\": false, \"generate_release_notes\": false }" "https://api.github.com/repos/$GITHUB_OWNER/$GITHUB_REPOSITORY/releases"
 echo ""
 
 echo ""

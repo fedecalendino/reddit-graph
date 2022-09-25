@@ -26,5 +26,7 @@ def create_app(test_config=None):
     def hello():
         return "🌿 Yahaha! You found me! 🌿"
 
-    app.run(host="0.0.0.0", port=8000)
+    if __name__ == "__main__":
+        app.run(host="0.0.0.0", port=8000)
+
     return app

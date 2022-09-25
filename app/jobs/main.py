@@ -25,6 +25,9 @@ def run():
         name = None
 
         try:
+            if counter % 10000 == 0:
+                actions.make_release()
+
             if counter % 500 == 0:
                 actions.fill_queue_with_outdated_subreddits()
 

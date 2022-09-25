@@ -1,4 +1,4 @@
-./build_container.sh
+./container/build.sh
 
 docker push fedecalendino/reddit-graph
 

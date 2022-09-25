@@ -10,7 +10,9 @@ WIKI_PAGES_LIMIT = int(os.getenv("WIKI_PAGES_LIMIT", "200"))
 
 # Applications ================================================================
 
-INSTALLED_APPS = ["app"]
+INSTALLED_APPS = [
+    "app",
+]
 
 
 # Settings ====================================================================
