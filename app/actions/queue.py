@@ -93,7 +93,7 @@ def fill_with_outdated_subreddits():
 
     for subreddit in queryset.all():
         if subreddit.type in excluded_types:
-            if subreddit.version == CURRENT_SUBREDDIT_VERSION:
+            if subreddit.VERSION == CURRENT_SUBREDDIT_VERSION:
                 continue
 
         items.append(

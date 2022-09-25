@@ -6,10 +6,17 @@ RUN apt update
 RUN apt install -y curl git postgresql-client libpq-dev
 RUN psql --version
 
+
+RUN git config --global user.email "fede@calendino.com"
+RUN git config --global user.name "Fede Calendino"
+
+
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install -r requirements.txt
 
+
 COPY app /app/app
+COPY bin /app/bin
 COPY main.py /app/main.py
 COPY manage.py /app/manage.py
 COPY settings.py /app/settings.py
