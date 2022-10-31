@@ -16,11 +16,6 @@ def run():
     counter = 0
     subreddits_only = settings.SUBREDDITS_ONLY
 
-    current = Queue.objects.order_by("-priority", "name").first()
-
-    if not current:
-        actions.fill_queue_with_popular_subreddits()
-
     while True:
         name = None
 
@@ -28,10 +23,17 @@ def run():
             if counter % 50000 == 0:
                 actions.make_release()
 
+            if counter % 10000 == 0:
+                actions.fill_queue_with_popular_subreddits()
+
             if counter % 500 == 0:
                 actions.fill_queue_with_outdated_subreddits()
 
-            current = Queue.objects.order_by("-priority", "name").first()
+            if counter % 25 != 0:
+                current = Queue.objects.order_by("-priority", "name").first()
+            else:
+                current = None
+
             counter += 1
 
             if current:

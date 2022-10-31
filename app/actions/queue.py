@@ -60,14 +60,17 @@ def fill_with_popular_subreddits():
         if sub.subscribers > 1_000_000:
             continue
 
-        items.append(
-            Queue(
-                created_at=timezone.now(),
-                updated_at=timezone.now(),
-                name=sub.display_name.lower(),
-                priority=-sub.subscribers,
+        name = sub.display_name.lower()
+
+        if not Queue.objects.filter(name=name).first():
+            items.append(
+                Queue(
+                    created_at=timezone.now(),
+                    updated_at=timezone.now(),
+                    name=name,
+                    priority=-sub.subscribers,
+                )
             )
-        )
 
     logger.info("  * queuing %s names", len(items))
     Queue.objects.bulk_create(items, batch_size=250)
